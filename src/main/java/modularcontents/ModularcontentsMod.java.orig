@@ -47,17 +47,6 @@ import net.minecraftforge.fml.relauncher.ReflectionHelper;
 import java.util.List;
 import java.io.File;
 
-import modularcontents.custom.block.BlockAirdrop;
-import modularcontents.custom.block.TileEntityAirdrop;
-import modularcontents.custom.inventory.ContainerAirdrop;
-import modularcontents.custom.gui.GuiAirdrop;
-
-import modularcontents.custom.entity.EntityAirdrop;
-import modularcontents.custom.entity.RenderAirdrop;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
-import net.minecraftforge.fml.common.registry.EntityRegistry;
-import net.minecraft.util.ResourceLocation;
-
 @Mod(modid = ModularcontentsMod.MODID, version = ModularcontentsMod.VERSION, name = "ModularContents")
 @Mod.EventBusSubscriber
 public class ModularcontentsMod implements IGuiHandler {
@@ -80,19 +69,10 @@ public class ModularcontentsMod implements IGuiHandler {
     public static Block custom_workbench = new BlockListWorkbench().setRegistryName("custom_workbench").setUnlocalizedName("custom_workbench");
     public static Item custom_workbench_item = new ItemBlock(custom_workbench).setRegistryName(custom_workbench.getRegistryName());
 
-    public static Block airdrop = new BlockAirdrop();
-    public static Item airdrop_item = new ItemBlock(airdrop).setRegistryName(airdrop.getRegistryName());
-
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         // Load custom config
         ModularContentsConfig.load(event.getModConfigurationDirectory().getParentFile());
-
-        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "airdrop"), EntityAirdrop.class, "Airdrop", 1, instance, 64, 1, true);
-
-        if (event.getSide() == Side.CLIENT) {
-            RenderingRegistry.registerEntityRenderingHandler(EntityAirdrop.class, RenderAirdrop::new);
-        }
 
         // Setup directories for custom recipes
         ListWorkbenchRecipeManager.setupDirectories(event.getModConfigurationDirectory().getParentFile());
@@ -116,23 +96,8 @@ public class ModularcontentsMod implements IGuiHandler {
     @SideOnly(Side.CLIENT)
     private void injectCustomResourcePack(File gameDir) {
         try {
-            ModularResourcePack pack = new ModularResourcePack(gameDir);
             List<IResourcePack> defaultPacks = ReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "defaultResourcePacks", "field_110449_ao");
-            defaultPacks.add(pack);
-
-            net.minecraft.client.resources.IResourceManager manager = Minecraft.getMinecraft().getResourceManager();
-            if (manager instanceof net.minecraft.client.resources.SimpleReloadableResourceManager) {
-                java.util.Map<String, net.minecraft.client.resources.FallbackResourceManager> domainManagers = ReflectionHelper.getPrivateValue(net.minecraft.client.resources.SimpleReloadableResourceManager.class, (net.minecraft.client.resources.SimpleReloadableResourceManager) manager, "domainResourceManagers", "field_110548_a");
-                net.minecraft.client.resources.FallbackResourceManager fallback = domainManagers.get("modularcontents");
-                if (fallback != null) {
-                    fallback.addResourcePack(pack);
-                } else {
-                    fallback = new net.minecraft.client.resources.FallbackResourceManager(new net.minecraft.client.resources.data.MetadataSerializer());
-                    fallback.addResourcePack(pack);
-                    domainManagers.put("modularcontents", fallback);
-                }
-            }
-
+            defaultPacks.add(new ModularResourcePack(gameDir));
             System.out.println("[ModularContents] Successfully injected ModularResourcePack for dynamic textures!");
         } catch (Exception e) {
             System.out.println("[ModularContents] Failed to inject dynamic resource pack: " + e.getMessage());
@@ -158,15 +123,11 @@ public class ModularcontentsMod implements IGuiHandler {
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         event.getRegistry().register(custom_workbench);
         GameRegistry.registerTileEntity(TileEntityListWorkbench.class, "modularcontents:tile_list_workbench");
-
-        event.getRegistry().register(airdrop);
-        GameRegistry.registerTileEntity(TileEntityAirdrop.class, "modularcontents:tile_airdrop");
     }
 
     @SubscribeEvent
     public static void registerItems(RegistryEvent.Register<Item> event) {
         event.getRegistry().register(custom_workbench_item);
-        event.getRegistry().register(airdrop_item);
 
         for (CustomItemInfo info : CustomItemManager.CUSTOM_ITEMS.values()) {
             Item item = new ItemCustom(info);
@@ -178,14 +139,11 @@ public class ModularcontentsMod implements IGuiHandler {
     @SideOnly(Side.CLIENT)
     public static void registerModels(ModelRegistryEvent event) {
         ModelLoader.setCustomModelResourceLocation(custom_workbench_item, 0, new ModelResourceLocation(custom_workbench_item.getRegistryName(), "inventory"));
-        ModelLoader.setCustomModelResourceLocation(airdrop_item, 0, new ModelResourceLocation(airdrop_item.getRegistryName(), "inventory"));
 
         for (CustomItemInfo info : CustomItemManager.CUSTOM_ITEMS.values()) {
             Item item = Item.getByNameOrId("modularcontents:" + info.id);
             if (item != null) {
                 ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(item.getRegistryName(), "inventory"));
-            } else {
-                System.out.println("[ModularContents] WARNING: Item.getByNameOrId returned null for " + info.id);
             }
         }
     }
@@ -200,12 +158,6 @@ public class ModularcontentsMod implements IGuiHandler {
                 return new ContainerListWorkbench(player.inventory, (TileEntityListWorkbench) te);
             }
         }
-        if (id == 2) {
-            TileEntity te = world.getTileEntity(new BlockPos(x, y, z));
-            if (te instanceof TileEntityAirdrop) {
-                return new ContainerAirdrop(player.inventory, (TileEntityAirdrop) te);
-            }
-        }
         return null;
     }
 
@@ -215,12 +167,6 @@ public class ModularcontentsMod implements IGuiHandler {
             TileEntity te = world.getTileEntity(new BlockPos(x, y, z));
             if (te instanceof TileEntityListWorkbench) {
                 return new GuiListWorkbench(player.inventory, (TileEntityListWorkbench) te);
-            }
-        }
-        if (id == 2) {
-            TileEntity te = world.getTileEntity(new BlockPos(x, y, z));
-            if (te instanceof TileEntityAirdrop) {
-                return new GuiAirdrop(player.inventory, (TileEntityAirdrop) te);
             }
         }
         return null;

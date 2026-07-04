@@ -22,7 +22,7 @@ public class CommandModularContents extends CommandBase {
 
     @Override
     public String getUsage(ICommandSender sender) {
-        return "/modularcontents reload";
+        return "/modularcontents <reload|airdrop>";
     }
 
     @Override
@@ -45,6 +45,23 @@ public class CommandModularContents extends CommandBase {
 
             int count = ListWorkbenchRecipeManager.getAllRecipes().size();
             sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Successfully reloaded " + count + " recipes!"));
+        } else if (args.length > 0 && args[0].equalsIgnoreCase("airdrop")) {
+            if (args.length >= 3) {
+                try {
+                    double x = parseCoordinate(sender.getPosition().getX(), args[1], true).getResult();
+                    double z = parseCoordinate(sender.getPosition().getZ(), args[2], true).getResult();
+
+                    net.minecraft.world.World world = sender.getEntityWorld();
+                    modularcontents.custom.entity.EntityAirdrop airdrop = new modularcontents.custom.entity.EntityAirdrop(world, x, 250.0D, z);
+                    world.spawnEntity(airdrop);
+
+                    sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Airdrop spawned at X: " + (int)x + " Z: " + (int)z));
+                } catch (Exception e) {
+                    sender.sendMessage(new TextComponentString(TextFormatting.RED + "Invalid coordinates"));
+                }
+            } else {
+                sender.sendMessage(new TextComponentString(TextFormatting.RED + "Usage: /modularcontents airdrop <x> <z>"));
+            }
         } else {
             sender.sendMessage(new TextComponentString(TextFormatting.RED + "Usage: " + getUsage(sender)));
         }
@@ -53,7 +70,7 @@ public class CommandModularContents extends CommandBase {
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) {
-            return getListOfStringsMatchingLastWord(args, "reload");
+            return getListOfStringsMatchingLastWord(args, "reload", "airdrop");
         }
         return super.getTabCompletions(server, sender, args, targetPos);
     }

@@ -20,8 +20,8 @@ public class ContainerListWorkbench extends Container {
         this.te = te;
 
         // 3 Output Slots - positioned far right
-        int outX = 196;
-        int outY = 108;
+        int outX = 194;
+        int outY = 106;
         for (int i = 0; i < 3; i++) {
             this.addSlotToContainer(new SlotItemHandler(te.outputSlots, i, outX + i * 18, outY) {
                 @Override

@@ -1,0 +1,32 @@
+--- src/main/java/modularcontents/ModularcontentsMod.java
++++ src/main/java/modularcontents/ModularcontentsMod.java
+@@ -40,6 +40,8 @@
+ import net.minecraft.client.Minecraft;
+ import net.minecraft.client.resources.IResourcePack;
+ import net.minecraft.item.ItemStack;
++import net.minecraft.client.resources.IResourceManager;
++import net.minecraft.client.resources.SimpleReloadableResourceManager;
++import net.minecraft.client.resources.FallbackResourceManager;
+ import net.minecraftforge.fml.relauncher.ReflectionHelper;
+ import java.util.List;
+ import java.io.File;
+@@ -99,8 +101,17 @@
+     @SideOnly(Side.CLIENT)
+     private void injectCustomResourcePack(File gameDir) {
+         try {
++            ModularResourcePack pack = new ModularResourcePack(gameDir);
+             List<IResourcePack> defaultPacks = ReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "defaultResourcePacks", "field_110449_ao");
+-            defaultPacks.add(new ModularResourcePack(gameDir));
++            defaultPacks.add(pack);
++            
++            IResourceManager manager = Minecraft.getMinecraft().getResourceManager();
++            if (manager instanceof SimpleReloadableResourceManager) {
++                java.util.Map<String, FallbackResourceManager> domainManagers = ReflectionHelper.getPrivateValue(SimpleReloadableResourceManager.class, (SimpleReloadableResourceManager) manager, "domainResourceManagers", "field_110548_a");
++                FallbackResourceManager fallback = domainManagers.get("modularcontents");
++                if (fallback != null) {
++                    fallback.addResourcePack(pack);
++                }
++            }
+             System.out.println("[ModularContents] Successfully injected ModularResourcePack for dynamic textures!");
+         } catch (Exception e) {
+             System.out.println("[ModularContents] Failed to inject dynamic resource pack: " + e.getMessage());

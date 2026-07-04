@@ -1,12 +1,9 @@
 package modularcontents.custom.block;
 
 import modularcontents.ModularcontentsMod;
-import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.Block;
 import net.minecraft.block.ITileEntityProvider;
 import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.properties.PropertyDirection;
 import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
@@ -28,21 +25,21 @@ import javax.annotation.Nullable;
 
 public class BlockListWorkbench extends Block implements ITileEntityProvider {
 
-    public static final PropertyBool CRAFTING = PropertyBool.create("crafting");
-    public static final PropertyDirection FACING = BlockHorizontal.FACING;
+    public static final CustomPropertyBool CRAFTING = CustomPropertyBool.create("crafting");
+    public static final CustomPropertyDirection FACING = CustomPropertyDirection.create("facing", net.minecraft.util.EnumFacing.Plane.HORIZONTAL);
 
     // Hitboxes for 2x1x1 dimensions
     // "Центр коллизии слева" - значит якорный блок находится слева, а вторая половина уходит вправо (относительно взгляда игрока)
     private static final AxisAlignedBB AABB_NORTH = new AxisAlignedBB(-1.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
     private static final AxisAlignedBB AABB_SOUTH = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 2.0D, 1.0D, 1.0D);
-    private static final AxisAlignedBB AABB_WEST = new AxisAlignedBB(0.0D, 0.0D, -1.0D, 1.0D, 1.0D, 1.0D);
-    private static final AxisAlignedBB AABB_EAST = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 2.0D);
+    private static final AxisAlignedBB AABB_WEST = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 2.0D);
+    private static final AxisAlignedBB AABB_EAST = new AxisAlignedBB(0.0D, 0.0D, -1.0D, 1.0D, 1.0D, 1.0D);
 
     public BlockListWorkbench() {
-        super(Material.WOOD);
+        super(Material.ROCK); // Changed from WOOD to ROCK temporarily to bypass the missing field
         this.setHardness(2.5F);
         this.setResistance(10.0F);
-        this.setCreativeTab(net.minecraft.creativetab.CreativeTabs.DECORATIONS);
+        this.setCreativeTab(modularcontents.ModularcontentsMod.MODULAR_TAB);
         this.setDefaultState(this.blockState.getBaseState().withProperty(CRAFTING, false).withProperty(FACING, EnumFacing.NORTH));
     }
 

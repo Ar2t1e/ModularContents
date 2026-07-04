@@ -207,7 +207,7 @@ public class GuiListWorkbench extends GuiContainer {
         this.buttonList.add(btnPlus);
 
         // Search field (Left Panel)
-        searchField = new GuiTextField(7, this.fontRenderer, guiLeft + 8, guiTop + 20, 110, 14);
+        searchField = new GuiTextField(7, this.fontRenderer, guiLeft + 8, guiTop + 22, 110, 10);
         searchField.setMaxStringLength(30);
         searchField.setEnableBackgroundDrawing(true);
         searchField.setTextColor(16777215);
@@ -452,10 +452,10 @@ public class GuiListWorkbench extends GuiContainer {
         }
 
         // --- DRAW LEFT BLOCK CONTENT ---
-        // Style the search field manually with a border
-        drawRect(guiLeft + 7, guiTop + 19, guiLeft + 119, guiTop + 35, 0xFF4A4A4A);
-        drawRect(guiLeft + 8, guiTop + 20, guiLeft + 118, guiTop + 34, 0xFF151515);
-        drawRect(guiLeft + 8, guiTop + 20, guiLeft + 118, guiTop + 21, 0x55000000); // inner shadow
+        // Style the search field manually with a border (made thinner)
+        drawRect(guiLeft + 7, guiTop + 21, guiLeft + 119, guiTop + 33, 0xFF4A4A4A);
+        drawRect(guiLeft + 8, guiTop + 22, guiLeft + 118, guiTop + 32, 0xFF151515);
+        drawRect(guiLeft + 8, guiTop + 22, guiLeft + 118, guiTop + 23, 0x55000000); // inner shadow
         searchField.setEnableBackgroundDrawing(false);
         searchField.drawTextBox();
 
@@ -628,13 +628,13 @@ public class GuiListWorkbench extends GuiContainer {
         }
 
         // --- 3 OUTPUT SLOTS ---
-        int outX = guiLeft + 195;
+        int outX = guiLeft + 194;
         for (int i = 0; i < 3; i++) {
-            drawRect(outX + i * 18 - 1, guiTop + 106, outX + i * 18 + 17, guiTop + 124, 0xFF4A4A4A); // lighter border for outputs
-            drawRect(outX + i * 18, guiTop + 107, outX + i * 18 + 16, guiTop + 123, 0xFF151515); // slightly lighter bg
+            drawRect(outX + i * 18 - 1, guiTop + 105, outX + i * 18 + 17, guiTop + 123, 0xFF4A4A4A); // lighter border for outputs
+            drawRect(outX + i * 18, guiTop + 106, outX + i * 18 + 16, guiTop + 122, 0xFF151515); // slightly lighter bg
             // inner shadow
-            drawRect(outX + i * 18, guiTop + 107, outX + i * 18 + 16, guiTop + 108, 0x55000000);
-            drawRect(outX + i * 18, guiTop + 107, outX + i * 18 + 1, guiTop + 123, 0x55000000);
+            drawRect(outX + i * 18, guiTop + 106, outX + i * 18 + 16, guiTop + 107, 0x55000000);
+            drawRect(outX + i * 18, guiTop + 106, outX + i * 18 + 1, guiTop + 122, 0x55000000);
         }
     }
 
