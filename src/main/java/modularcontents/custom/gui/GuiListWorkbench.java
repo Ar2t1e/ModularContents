@@ -1,5 +1,6 @@
 package modularcontents.custom.gui;
 
+import modularcontents.ModularcontentsMod;
 import modularcontents.custom.block.TileEntityListWorkbench;
 import modularcontents.custom.inventory.ContainerListWorkbench;
 import modularcontents.custom.network.PacketCraftCancel;
@@ -25,8 +26,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -378,7 +381,7 @@ public class GuiListWorkbench extends GuiContainer {
     private int getMaxAffordable(ListWorkbenchRecipe recipe) {
         int max = 64;
 
-        java.util.Map<String, Integer> requiredTotals = new java.util.HashMap<>();
+        Map<String, Integer> requiredTotals = new HashMap<>();
         for (IngredientStack ing : recipe.inputs) {
             if (ing.count <= 0) continue;
             ItemStack stack = ing.toItemStack();
@@ -417,7 +420,7 @@ public class GuiListWorkbench extends GuiContainer {
         ListWorkbenchRecipe recipeToShow = getRecipeToShow();
 
         if (button.id == 0 && recipeToShow != null) {
-            modularcontents.ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketCraftStart(recipeToShow.id, te.getPos(), craftAmount));
+            ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketCraftStart(recipeToShow.id, te.getPos(), craftAmount));
         } else if (button.id == 4 && currentCategoryIndex > 0) {
             currentCategoryIndex--;
             updateCategoryRecipes();
@@ -911,7 +914,7 @@ public class GuiListWorkbench extends GuiContainer {
                 int qx = getQueueSlotX(i);
                 if (mouseX >= qx && mouseX < qx + 16 && mouseY >= qy && mouseY < qy + 16) {
                     if (!te.getQueueRecipeId(i).isEmpty()) {
-                        modularcontents.ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketCraftCancel(te.getPos(), i));
+                        ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketCraftCancel(te.getPos(), i));
                     }
                     return;
                 }

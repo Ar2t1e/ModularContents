@@ -1,5 +1,11 @@
-tile.custom_workbench.name=Верстак крафта
-tile.custom_workbench_part.name=Верстак крафта
-tile.airdrop.name=Аирдроп
-
 itemGroup.modular_contents=§6Modular Contents
+
+tile.custom_workbench.name=Модульный верстак
+tile.custom_workbench_part.name=Модульный верстак
+tile.airdrop.name=Ящик снабжения
+tile.laptop.name=Ноутбук
+
+item.signal_flare.name=Сигнальная ракета
+item.radio.name=Рация снабжения
+
+container.airdrop=Ящик снабжения

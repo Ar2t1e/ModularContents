@@ -1,1 +1,10 @@
-{}
+{
+  "airdrop_smoke": {
+    "category": "block",
+    "sounds": [
+      {
+        "name": "modularcontents:airdrop/airdrop_smoke"
+      }
+    ]
+  }
+}

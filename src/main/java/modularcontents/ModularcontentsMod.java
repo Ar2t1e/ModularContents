@@ -1,10 +1,20 @@
 package modularcontents;
 
 import modularcontents.custom.block.BlockListWorkbench;
+import modularcontents.custom.block.BlockListWorkbenchPart;
+import modularcontents.custom.block.ItemBlockListWorkbench;
 import modularcontents.custom.block.TileEntityListWorkbench;
 import modularcontents.custom.entity.RenderSignalFlare;
+import modularcontents.custom.gui.GuiContentCreator;
 import modularcontents.custom.gui.GuiListWorkbench;
+import modularcontents.custom.inventory.ContainerContentCreator;
 import modularcontents.custom.inventory.ContainerListWorkbench;
+import modularcontents.custom.item.ItemRadio;
+import modularcontents.custom.item.ItemSignalFlare;
+import modularcontents.custom.keybind.KeybindManager;
+import modularcontents.custom.loot.AirdropLootManager;
+import modularcontents.custom.tab.CustomTabManager;
+import modularcontents.proxy.CommonProxy;
 import modularcontents.custom.network.PacketCraftCancel;
 import modularcontents.custom.network.PacketCraftCancelHandler;
 import modularcontents.custom.network.PacketCraftStart;
@@ -14,6 +24,8 @@ import modularcontents.custom.config.ModularContentsConfig;
 import modularcontents.custom.command.CommandModularContents;
 
 import net.minecraft.block.Block;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.util.SoundEvent;
 import net.minecraft.client.resources.FallbackResourceManager;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.SimpleReloadableResourceManager;
@@ -28,6 +40,7 @@ import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
@@ -84,9 +97,12 @@ public class ModularcontentsMod implements IGuiHandler {
     @Mod.Instance(MODID)
     public static ModularcontentsMod instance;
 
+    @SidedProxy(clientSide = "modularcontents.proxy.ClientProxy", serverSide = "modularcontents.proxy.CommonProxy")
+    public static CommonProxy proxy;
+
     public static final SimpleNetworkWrapper PACKET_HANDLER = NetworkRegistry.INSTANCE.newSimpleChannel("modularcontents:main");
 
-    public static final net.minecraft.creativetab.CreativeTabs MODULAR_TAB = new net.minecraft.creativetab.CreativeTabs("modular_contents") {
+    public static final CreativeTabs MODULAR_TAB = new CreativeTabs("modular_contents") {
         @Override
         public ItemStack getTabIconItem() {
             return new ItemStack(custom_workbench_item);
@@ -94,15 +110,17 @@ public class ModularcontentsMod implements IGuiHandler {
     };
 
     public static Block custom_workbench = new BlockListWorkbench().setRegistryName("custom_workbench").setUnlocalizedName("custom_workbench");
-    public static Block custom_workbench_part = new modularcontents.custom.block.BlockListWorkbenchPart(custom_workbench).setRegistryName("custom_workbench_part").setUnlocalizedName("custom_workbench_part");
-    public static Item custom_workbench_item = new modularcontents.custom.block.ItemBlockListWorkbench(custom_workbench).setRegistryName(custom_workbench.getRegistryName());
+    public static Block custom_workbench_part = new BlockListWorkbenchPart(custom_workbench).setRegistryName("custom_workbench_part").setUnlocalizedName("custom_workbench_part");
+    public static Item custom_workbench_item = new ItemBlockListWorkbench(custom_workbench).setRegistryName(custom_workbench.getRegistryName());
 
     public static Block airdrop = new BlockAirdrop();
     public static Item airdrop_item = new ItemBlock(airdrop).setRegistryName(airdrop.getRegistryName());
     public static Block laptop = new BlockLaptop();
     public static Item laptop_item = new ItemBlock(laptop).setRegistryName(laptop.getRegistryName());
-    public static Item signal_flare = new modularcontents.custom.item.ItemSignalFlare();
-    public static Item radio = new modularcontents.custom.item.ItemRadio();
+    public static Item signal_flare = new ItemSignalFlare();
+    public static Item radio = new ItemRadio();
+
+    public static final SoundEvent AIRDROP_SMOKE = new SoundEvent(new ResourceLocation(MODID, "airdrop_smoke")).setRegistryName(MODID, "airdrop_smoke");
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
@@ -115,7 +133,7 @@ public class ModularcontentsMod implements IGuiHandler {
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "signal_flare"), EntitySignalFlare.class, "SignalFlare", 2, instance, 64, 1, true);
 
         if (event.getSide() == Side.CLIENT) {
-            modularcontents.custom.keybind.KeybindManager.register();
+            KeybindManager.register();
             RenderingRegistry.registerEntityRenderingHandler(EntityAirdrop.class, RenderAirdrop::new);
             RenderingRegistry.registerEntityRenderingHandler(EntitySignalFlare.class, manager -> new RenderSignalFlare(manager, signal_flare, Minecraft.getMinecraft().getRenderItem()));
         }
@@ -124,7 +142,7 @@ public class ModularcontentsMod implements IGuiHandler {
         ListWorkbenchRecipeManager.setupDirectories(event.getModConfigurationDirectory().getParentFile());
 
         // Load custom tabs and items JSON definitions BEFORE item registration
-        modularcontents.custom.tab.CustomTabManager.loadTabs(event.getModConfigurationDirectory().getParentFile());
+        CustomTabManager.loadTabs(event.getModConfigurationDirectory().getParentFile());
         CustomItemManager.loadItems(event.getModConfigurationDirectory().getParentFile());
 
         if (event.getSide() == Side.CLIENT) {
@@ -151,7 +169,7 @@ public class ModularcontentsMod implements IGuiHandler {
 
             IResourceManager manager = Minecraft.getMinecraft().getResourceManager();
             if (manager instanceof SimpleReloadableResourceManager) {
-                Map<String, FallbackResourceManager> domainManagers = ReflectionHelper.getPrivateValue(net.minecraft.client.resources.SimpleReloadableResourceManager.class, (net.minecraft.client.resources.SimpleReloadableResourceManager) manager, "domainResourceManagers", "field_110548_a");
+                Map<String, FallbackResourceManager> domainManagers = ReflectionHelper.getPrivateValue(SimpleReloadableResourceManager.class, (SimpleReloadableResourceManager) manager, "domainResourceManagers", "field_110548_a");
                 FallbackResourceManager fallback = domainManagers.get("modularcontents");
                 if (fallback != null) {
                     fallback.addResourcePack(pack);
@@ -178,7 +196,7 @@ public class ModularcontentsMod implements IGuiHandler {
     public void serverLoad(FMLServerStartingEvent event) {
         // Load JSON recipes when server starts
         ListWorkbenchRecipeManager.loadRecipes(event.getServer().getDataDirectory());
-        modularcontents.custom.loot.AirdropLootManager.loadLootTables(event.getServer().getDataDirectory());
+        AirdropLootManager.loadLootTables(event.getServer().getDataDirectory());
 
         // Register in-game commands
         event.registerServerCommand(new CommandModularContents());
@@ -194,6 +212,11 @@ public class ModularcontentsMod implements IGuiHandler {
 
         event.getRegistry().register(airdrop);
         GameRegistry.registerTileEntity(TileEntityAirdrop.class, "modularcontents:tile_airdrop");
+    }
+
+    @SubscribeEvent
+    public static void registerSounds(RegistryEvent.Register<SoundEvent> event) {
+        event.getRegistry().register(AIRDROP_SMOKE);
     }
 
     @SubscribeEvent
@@ -282,7 +305,7 @@ public class ModularcontentsMod implements IGuiHandler {
             }
         }
         if (id == 4) {
-            return new modularcontents.custom.inventory.ContainerContentCreator(player.inventory);
+            return new ContainerContentCreator(player.inventory);
         }
         return null;
     }
@@ -305,7 +328,7 @@ public class ModularcontentsMod implements IGuiHandler {
             return new GuiLaptop(world, new BlockPos(x, y, z));
         }
         if (id == 4) {
-            return new modularcontents.custom.gui.GuiContentCreator(player.inventory);
+            return new GuiContentCreator(player.inventory);
         }
         return null;
     }

@@ -4,17 +4,25 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import modularcontents.custom.recipe.ListWorkbenchRecipeManager;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 public class AirdropLootManager {
 
@@ -40,29 +48,9 @@ public class AirdropLootManager {
                     File[] jsonFiles = lootDir.listFiles((dir, name) -> name.endsWith(".json"));
                     if (jsonFiles != null) {
                         for (File jsonFile : jsonFiles) {
-                            try {
-                                String name = jsonFile.getName().replace(".json", "");
-                                JsonObject root = GSON.fromJson(new FileReader(jsonFile), JsonObject.class);
-
-                                int weight = root.has("weight") ? root.get("weight").getAsInt() : 10;
-                                List<LootEntry> entries = new ArrayList<>();
-
-                                if (root.has("items")) {
-                                    JsonArray itemsArray = root.getAsJsonArray("items");
-                                    for (JsonElement el : itemsArray) {
-                                        JsonObject itemObj = el.getAsJsonObject();
-                                        String itemName = itemObj.get("item").getAsString();
-                                        int meta = itemObj.has("meta") ? itemObj.get("meta").getAsInt() : 0;
-                                        int min = itemObj.has("min") ? itemObj.get("min").getAsInt() : 1;
-                                        int max = itemObj.has("max") ? itemObj.get("max").getAsInt() : 1;
-                                        double chance = itemObj.has("chance") ? itemObj.get("chance").getAsDouble() : 1.0;
-
-                                        entries.add(new LootEntry(itemName, meta, min, max, chance));
-                                    }
-                                }
-
-                                LOOT_TABLES.put(name, new AirdropLootTable(name, weight, entries));
-                                System.out.println("[ModularContents] Loaded airdrop loot table: " + name + " from " + packDir.getName());
+                            String name = jsonFile.getName().replace(".json", "");
+                            try (Reader reader = new FileReader(jsonFile)) {
+                                loadLootTable(name, reader, packDir.getName());
                             } catch (Exception e) {
                                 System.err.println("[ModularContents] Failed to load airdrop loot table from: " + jsonFile.getAbsolutePath());
                                 e.printStackTrace();
@@ -72,6 +60,61 @@ public class AirdropLootManager {
                 }
             }
         }
+
+        File[] zips = rootPacksDir.listFiles((d, name) -> name.toLowerCase(Locale.ROOT).endsWith(".zip"));
+        if (zips != null) {
+            for (File zip : zips) {
+                loadLootTablesFromZip(zip);
+            }
+        }
+    }
+
+    private static void loadLootTablesFromZip(File zipFile) {
+        try (ZipFile zip = new ZipFile(zipFile)) {
+            Enumeration<? extends ZipEntry> entries = zip.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                if (entry.isDirectory() || !ListWorkbenchRecipeManager.isAirdropLootEntry(entry.getName())) {
+                    continue;
+                }
+                String normalized = entry.getName().replace('\\', '/');
+                String fileName = normalized.substring(normalized.lastIndexOf('/') + 1);
+                String name = fileName.substring(0, fileName.length() - ".json".length());
+                try (Reader reader = new InputStreamReader(zip.getInputStream(entry), StandardCharsets.UTF_8)) {
+                    loadLootTable(name, reader, zipFile.getName());
+                } catch (Exception e) {
+                    System.err.println("[ModularContents] Failed to load airdrop loot table: " + entry.getName() + " in pack: " + zipFile.getName());
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[ModularContents] Failed to open pack archive: " + zipFile.getName());
+            e.printStackTrace();
+        }
+    }
+
+    private static void loadLootTable(String name, Reader reader, String packName) {
+        JsonObject root = GSON.fromJson(reader, JsonObject.class);
+
+        int weight = root.has("weight") ? root.get("weight").getAsInt() : 10;
+        List<LootEntry> entries = new ArrayList<>();
+
+        if (root.has("items")) {
+            JsonArray itemsArray = root.getAsJsonArray("items");
+            for (JsonElement el : itemsArray) {
+                JsonObject itemObj = el.getAsJsonObject();
+                String itemName = itemObj.get("item").getAsString();
+                int meta = itemObj.has("meta") ? itemObj.get("meta").getAsInt() : 0;
+                int min = itemObj.has("min") ? itemObj.get("min").getAsInt() : 1;
+                int max = itemObj.has("max") ? itemObj.get("max").getAsInt() : 1;
+                double chance = itemObj.has("chance") ? itemObj.get("chance").getAsDouble() : 1.0;
+
+                entries.add(new LootEntry(itemName, meta, min, max, chance));
+            }
+        }
+
+        LOOT_TABLES.put(name, new AirdropLootTable(name, weight, entries));
+        System.out.println("[ModularContents] Loaded airdrop loot table: " + name + " from " + packName);
     }
 
     public static String getRandomLootTable() {

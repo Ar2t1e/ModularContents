@@ -2,6 +2,7 @@ package modularcontents.custom.tab;
 
 import com.google.gson.Gson;
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -46,7 +47,7 @@ public class CustomTabManager {
                                         return new ItemStack(iconItem);
                                     }
                                 }
-                                return new ItemStack(net.minecraft.init.Blocks.DIRT); // Fallback
+                                return new ItemStack(Blocks.DIRT); // Fallback
                             }
 
                             @Override

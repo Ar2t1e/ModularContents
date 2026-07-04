@@ -8,6 +8,7 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
@@ -26,7 +27,7 @@ import javax.annotation.Nullable;
 public class BlockListWorkbench extends Block implements ITileEntityProvider {
 
     public static final CustomPropertyBool CRAFTING = CustomPropertyBool.create("crafting");
-    public static final CustomPropertyDirection FACING = CustomPropertyDirection.create("facing", net.minecraft.util.EnumFacing.Plane.HORIZONTAL);
+    public static final CustomPropertyDirection FACING = CustomPropertyDirection.create("facing", EnumFacing.Plane.HORIZONTAL);
 
     public static boolean isBreakingMultiblock = false;
 
@@ -41,7 +42,7 @@ public class BlockListWorkbench extends Block implements ITileEntityProvider {
         super(Material.ROCK); // Changed from WOOD to ROCK temporarily to bypass the missing field
         this.setHardness(2.5F);
         this.setResistance(10.0F);
-        this.setCreativeTab(modularcontents.ModularcontentsMod.MODULAR_TAB);
+        this.setCreativeTab(ModularcontentsMod.MODULAR_TAB);
         this.setDefaultState(this.blockState.getBaseState().withProperty(CRAFTING, false).withProperty(FACING, EnumFacing.NORTH));
     }
 
@@ -136,7 +137,7 @@ public class BlockListWorkbench extends Block implements ITileEntityProvider {
             BlockPos partPos = getPartPos(state, pos);
             IBlockState partState = worldIn.getBlockState(partPos);
             if (partState.getBlock() instanceof BlockListWorkbenchPart) {
-                worldIn.setBlockState(partPos, net.minecraft.init.Blocks.AIR.getDefaultState(), 3);
+                worldIn.setBlockState(partPos, Blocks.AIR.getDefaultState(), 3);
             }
         } finally {
             isBreakingMultiblock = wasBreaking;

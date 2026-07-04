@@ -1,6 +1,7 @@
 package modularcontents.custom.client;
 
 import com.google.common.collect.ImmutableSet;
+import modularcontents.custom.item.CustomItemManager;
 import net.minecraft.client.resources.IResourcePack;
 import net.minecraft.client.resources.data.IMetadataSection;
 import net.minecraft.client.resources.data.MetadataSerializer;
@@ -33,7 +34,7 @@ public class ModularResourcePack implements IResourcePack {
         if (path.startsWith("models/item/") && path.endsWith(".json")) {
             String itemId = path.substring("models/item/".length(), path.length() - 5);
             // Check if we actually have a texture for this item, or if it's a registered custom item
-            if (modularcontents.custom.item.CustomItemManager.CUSTOM_ITEMS.containsKey(itemId) || itemId.equals("custom_workbench")) {
+            if (CustomItemManager.CUSTOM_ITEMS.containsKey(itemId) || itemId.equals("custom_workbench")) {
                 if (!itemId.equals("custom_workbench")) {
                     String generatedJson = "{\n  \"parent\": \"item/generated\",\n  \"textures\": {\n    \"layer0\": \"modularcontents:items/" + itemId + "\"\n  }\n}";
                     System.out.println("[ModularContents] Generated model for item: " + itemId);
@@ -81,7 +82,7 @@ public class ModularResourcePack implements IResourcePack {
         // Model intercept check
         if (path.startsWith("models/item/") && path.endsWith(".json")) {
             String itemId = path.substring("models/item/".length(), path.length() - 5);
-            if (modularcontents.custom.item.CustomItemManager.CUSTOM_ITEMS.containsKey(itemId) || itemId.equals("custom_workbench")) {
+            if (CustomItemManager.CUSTOM_ITEMS.containsKey(itemId) || itemId.equals("custom_workbench")) {
                 if (!itemId.equals("custom_workbench")) {
                     return true;
                 }

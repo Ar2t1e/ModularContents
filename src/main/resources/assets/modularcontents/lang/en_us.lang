@@ -1,5 +1,11 @@
-tile.custom_workbench.name=Crafting Workbench
-tile.custom_workbench_part.name=Crafting Workbench
-tile.airdrop.name=Airdrop
-
 itemGroup.modular_contents=§6Modular Contents
+
+tile.custom_workbench.name=Modular Workbench
+tile.custom_workbench_part.name=Modular Workbench
+tile.airdrop.name=Airdrop Crate
+tile.laptop.name=Laptop
+
+item.signal_flare.name=Signal Flare
+item.radio.name=Airdrop Radio
+
+container.airdrop=Airdrop Crate
