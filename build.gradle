@@ -17,6 +17,7 @@ group = 'modularcontents'
 archivesBaseName = 'modularcontents'
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
+compileJava.options.encoding = 'UTF-8'
 
 minecraft {
     mappings channel: 'snapshot', version: '20171003-1.12'
@@ -26,12 +27,32 @@ minecraft {
 
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
             property 'forge.logging.console.level', 'debug'
+
+            mods {
+                modularcontents {
+                    source sourceSets.main
+                }
+            }
         }
 
         server {
+            workingDirectory project.file('run')
+
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
             property 'forge.logging.console.level', 'debug'
+
+            mods {
+                modularcontents {
+                    source sourceSets.main
+                }
+            }
         }
+    }
+}
+
+sourceSets {
+    main {
+        output.resourcesDir = output.classesDir
     }
 }
 
@@ -40,6 +61,7 @@ dependencies {
 }
 
 jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
         attributes([
             "Specification-Title": "modularcontents",
