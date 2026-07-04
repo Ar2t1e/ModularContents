@@ -161,6 +161,27 @@ public class ListWorkbenchRecipeManager {
         return copied;
     }
 
+    public static String toSyncJson() {
+        return GSON.toJson(RECIPES.values());
+    }
+
+    public static void applySyncedRecipes(String json) {
+        try {
+            ListWorkbenchRecipe[] recipes = GSON.fromJson(json, ListWorkbenchRecipe[].class);
+            RECIPES.clear();
+            if (recipes != null) {
+                for (ListWorkbenchRecipe recipe : recipes) {
+                    if (recipe != null && recipe.id != null) {
+                        RECIPES.put(recipe.id, recipe);
+                    }
+                }
+            }
+            LOGGER.info("Synced " + RECIPES.size() + " workbench recipes from server");
+        } catch (Exception e) {
+            LOGGER.error("Failed to apply synced recipes", e);
+        }
+    }
+
     public static ListWorkbenchRecipe getRecipe(String id) {
         return RECIPES.get(id);
     }

@@ -74,3 +74,6 @@ modularcontents.creator.msg.empty_loot=Cannot generate empty loot table!
 modularcontents.creator.msg.recipe_needs=Recipe must have at least 1 input and 1 output!
 modularcontents.creator.msg.generated=Generated JSON: %s
 modularcontents.creator.msg.failed=Failed to write JSON: %s
+
+modularcontents.sync.missing_packs=[ModularContents] Content packs missing on your client: %s
+modularcontents.sync.missing_packs_hint=Items and textures from these packs will not display correctly. Install the packs into the ModularContents folder and restart the game.

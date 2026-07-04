@@ -13,12 +13,15 @@ import modularcontents.custom.item.ItemRadio;
 import modularcontents.custom.item.ItemSignalFlare;
 import modularcontents.custom.keybind.KeybindManager;
 import modularcontents.custom.loot.AirdropLootManager;
+import modularcontents.custom.pack.PackZipUtils;
 import modularcontents.custom.tab.CustomTabManager;
 import modularcontents.proxy.CommonProxy;
 import modularcontents.custom.network.PacketCraftCancel;
 import modularcontents.custom.network.PacketCraftCancelHandler;
 import modularcontents.custom.network.PacketCraftStart;
 import modularcontents.custom.network.PacketCraftStartHandler;
+import modularcontents.custom.network.PacketSyncContent;
+import modularcontents.custom.network.PacketSyncContentHandler;
 import modularcontents.custom.recipe.ListWorkbenchRecipeManager;
 import modularcontents.custom.config.ModularContentsConfig;
 import modularcontents.custom.command.CommandModularContents;
@@ -31,13 +34,16 @@ import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.SimpleReloadableResourceManager;
 import net.minecraft.client.resources.data.MetadataSerializer;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.client.event.ModelRegistryEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -45,6 +51,7 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.network.IGuiHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
@@ -158,6 +165,22 @@ public class ModularcontentsMod implements IGuiHandler {
         PACKET_HANDLER.registerMessage(PacketCraftCancelHandler.class, PacketCraftCancel.class, packetId++, Side.SERVER);
         PACKET_HANDLER.registerMessage(PacketLaptopAirdropHandler.class, PacketLaptopAirdrop.class, packetId++, Side.SERVER);
         PACKET_HANDLER.registerMessage(PacketOpenCreatorHandler.class, PacketOpenCreator.class, packetId++, Side.SERVER);
+        PACKET_HANDLER.registerMessage(PacketSyncContentHandler.class, PacketSyncContent.class, packetId++, Side.CLIENT);
+    }
+
+    public static PacketSyncContent buildContentSyncPacket() {
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        String requiredPacksJson = server != null
+                ? PackZipUtils.getClientRequiredPacksJson(server.getDataDirectory())
+                : "[]";
+        return new PacketSyncContent(ListWorkbenchRecipeManager.toSyncJson(), CustomTabManager.toSyncJson(), requiredPacksJson);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.player instanceof EntityPlayerMP) {
+            PACKET_HANDLER.sendTo(buildContentSyncPacket(), (EntityPlayerMP) event.player);
+        }
     }
 
     @SideOnly(Side.CLIENT)

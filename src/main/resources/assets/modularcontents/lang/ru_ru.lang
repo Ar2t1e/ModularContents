@@ -74,3 +74,6 @@ modularcontents.creator.msg.empty_loot=Нельзя создать пустую 
 modularcontents.creator.msg.recipe_needs=В рецепте нужен минимум 1 вход и 1 выход!
 modularcontents.creator.msg.generated=JSON создан: %s
 modularcontents.creator.msg.failed=Не удалось записать JSON: %s
+
+modularcontents.sync.missing_packs=[ModularContents] На вашем клиенте не установлены паки: %s
+modularcontents.sync.missing_packs_hint=Предметы и текстуры из этих паков будут отображаться некорректно. Установите паки в папку ModularContents и перезапустите игру.

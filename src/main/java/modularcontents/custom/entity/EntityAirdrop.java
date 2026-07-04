@@ -124,6 +124,8 @@ public class EntityAirdrop extends Entity {
                 if (te instanceof TileEntityAirdrop) {
                     ((TileEntityAirdrop) te).setLootTableName(this.lootTableName);
                     ((TileEntityAirdrop) te).setRedSmoke(this.isRedSmoke);
+                    IBlockState placedState = this.world.getBlockState(pos);
+                    this.world.notifyBlockUpdate(pos, placedState, placedState, 3);
                 }
 
                 // Notify player

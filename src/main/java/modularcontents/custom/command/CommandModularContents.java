@@ -1,9 +1,12 @@
 package modularcontents.custom.command;
 
+import modularcontents.ModularcontentsMod;
 import modularcontents.custom.entity.EntityAirdrop;
+import modularcontents.custom.network.PacketSyncContent;
 import modularcontents.custom.recipe.ListWorkbenchRecipeManager;
 import modularcontents.custom.loot.AirdropLootManager;
 import net.minecraft.command.CommandBase;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
@@ -48,6 +51,11 @@ public class CommandModularContents extends CommandBase {
             ListWorkbenchRecipeManager.loadRecipes(server.getDataDirectory());
             // Reload loot tables
             AirdropLootManager.loadLootTables(server.getDataDirectory());
+
+            PacketSyncContent syncPacket = ModularcontentsMod.buildContentSyncPacket();
+            for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+                ModularcontentsMod.PACKET_HANDLER.sendTo(syncPacket, player);
+            }
 
             int recipeCount = ListWorkbenchRecipeManager.getAllRecipes().size();
             int lootCount = AirdropLootManager.LOOT_TABLES.size();

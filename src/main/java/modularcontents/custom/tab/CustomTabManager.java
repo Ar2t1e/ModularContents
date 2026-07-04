@@ -1,6 +1,8 @@
 package modularcontents.custom.tab;
 
 import com.google.gson.Gson;
+import modularcontents.custom.item.CustomItemInfo;
+import modularcontents.custom.item.CustomItemManager;
 import modularcontents.custom.pack.PackZipUtils;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.init.Blocks;
@@ -10,7 +12,6 @@ import net.minecraft.util.ResourceLocation;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,9 +19,11 @@ public class CustomTabManager {
 
     private static final Gson GSON = new Gson();
     public static final Map<String, CreativeTabs> CUSTOM_TABS = new HashMap<>();
+    private static final Map<String, CustomTabInfo> TAB_INFOS = new HashMap<>();
 
     public static void loadTabs(File gameDir) {
         CUSTOM_TABS.clear();
+        TAB_INFOS.clear();
 
         File rootPacksDir = new File(gameDir, "ModularContents");
         if (!rootPacksDir.exists()) return;
@@ -36,7 +39,7 @@ public class CustomTabManager {
 
                 for (File file : jsonFiles) {
                     try (FileReader reader = new FileReader(file)) {
-                        registerTab(reader);
+                        registerTab(GSON.fromJson(reader, CustomTabInfo.class));
                     } catch (Exception e) {
                         System.err.println("[ModularContents] Failed to load custom tab from: " + file.getAbsolutePath());
                         e.printStackTrace();
@@ -45,11 +48,10 @@ public class CustomTabManager {
             }
         }
 
-        PackZipUtils.loadJsonEntries(rootPacksDir, "tabs", (fileName, reader, packName) -> registerTab(reader));
+        PackZipUtils.loadJsonEntries(rootPacksDir, "tabs", (fileName, reader, packName) -> registerTab(GSON.fromJson(reader, CustomTabInfo.class)));
     }
 
-    private static void registerTab(Reader reader) {
-        CustomTabInfo info = GSON.fromJson(reader, CustomTabInfo.class);
+    private static void registerTab(CustomTabInfo info) {
         if (info == null || info.id == null || info.id.isEmpty()) return;
 
         CreativeTabs newTab = new CreativeTabs(info.id) {
@@ -71,6 +73,35 @@ public class CustomTabManager {
         };
 
         CUSTOM_TABS.put(info.id, newTab);
+        TAB_INFOS.put(info.id, info);
         System.out.println("[ModularContents] Loaded custom creative tab: " + info.id);
+    }
+
+    public static String toSyncJson() {
+        return GSON.toJson(TAB_INFOS.values());
+    }
+
+    public static void applySyncedTabs(String json) {
+        try {
+            CustomTabInfo[] infos = GSON.fromJson(json, CustomTabInfo[].class);
+            if (infos != null) {
+                for (CustomTabInfo info : infos) {
+                    if (info != null && info.id != null && !info.id.isEmpty() && !CUSTOM_TABS.containsKey(info.id)) {
+                        registerTab(info);
+                    }
+                }
+            }
+
+            for (CustomItemInfo itemInfo : CustomItemManager.CUSTOM_ITEMS.values()) {
+                if (itemInfo.creativeTab == null || !CUSTOM_TABS.containsKey(itemInfo.creativeTab)) continue;
+                Item item = Item.getByNameOrId("modularcontents:" + itemInfo.id);
+                if (item != null && item.getCreativeTab() != CUSTOM_TABS.get(itemInfo.creativeTab)) {
+                    item.setCreativeTab(CUSTOM_TABS.get(itemInfo.creativeTab));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[ModularContents] Failed to apply synced creative tabs");
+            e.printStackTrace();
+        }
     }
 }
