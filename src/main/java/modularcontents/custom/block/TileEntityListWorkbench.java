@@ -24,8 +24,9 @@ import java.util.List;
 public class TileEntityListWorkbench extends TileEntity implements ITickable {
 
     public static final int QUEUE_SIZE = 3;
+    public static final int OUTPUT_SLOTS = 4;
 
-    public final ItemStackHandler outputSlots = new ItemStackHandler(3) {
+    public final ItemStackHandler outputSlots = new ItemStackHandler(OUTPUT_SLOTS) {
         @Override
         protected void onContentsChanged(int slot) {
             markDirty();
@@ -299,6 +300,16 @@ public class TileEntityListWorkbench extends TileEntity implements ITickable {
         super.readFromNBT(compound);
         if (compound.hasKey("OutputSlots")) {
             outputSlots.deserializeNBT((NBTTagCompound) compound.getTag("OutputSlots"));
+            if (outputSlots.getSlots() != OUTPUT_SLOTS) {
+                List<ItemStack> saved = new java.util.ArrayList<>();
+                for (int i = 0; i < outputSlots.getSlots(); i++) {
+                    saved.add(outputSlots.getStackInSlot(i));
+                }
+                outputSlots.setSize(OUTPUT_SLOTS);
+                for (int i = 0; i < saved.size() && i < OUTPUT_SLOTS; i++) {
+                    outputSlots.setStackInSlot(i, saved.get(i));
+                }
+            }
         }
         if (compound.hasKey("BufferSlots")) {
             bufferSlots.deserializeNBT((NBTTagCompound) compound.getTag("BufferSlots"));

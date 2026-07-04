@@ -87,7 +87,7 @@ public class GuiListWorkbench extends GuiContainer {
     private static final int LEFT_X0 = 4;
     private static final int LEFT_X1 = 132;
     private static final int RIGHT_X0 = 134;
-    private static final int RIGHT_X1 = 316;
+    private static final int RIGHT_X1 = 334;
 
     private static final int LIST_TOP = 38;
     private static final int LIST_HEIGHT = 110;
@@ -150,7 +150,7 @@ public class GuiListWorkbench extends GuiContainer {
         this.te = te;
         this.playerInv = playerInv;
         this.container = (ContainerListWorkbench) this.inventorySlots;
-        this.xSize = 320;
+        this.xSize = 338;
         this.ySize = 240;
 
         this.categories.add("Favorites");
@@ -242,7 +242,7 @@ public class GuiListWorkbench extends GuiContainer {
         btnCatPrev = new FlatButton(4, guiLeft + 8, guiTop + 5, 12, 12, "<");
         btnCatNext = new FlatButton(5, guiLeft + 112, guiTop + 5, 12, 12, ">");
 
-        btnFavorite = new FlatButton(6, guiLeft + 296, guiTop + 8, 14, 14, "*");
+        btnFavorite = new FlatButton(6, guiLeft + 314, guiTop + 8, 14, 14, "*");
 
         btnMinus = new FlatButton(8, guiLeft + 140, guiTop + 122, 14, 14, "-");
         btnPlus = new FlatButton(9, guiLeft + 184, guiTop + 122, 14, 14, "+");
@@ -633,17 +633,17 @@ public class GuiListWorkbench extends GuiContainer {
         reqScrollPos += (reqScrollTarget - reqScrollPos) * blend;
         if (Math.abs(reqScrollTarget - reqScrollPos) < 0.1f) reqScrollPos = reqScrollTarget;
 
-        drawRect(guiLeft + 3, guiTop + 3, guiLeft + 317, guiTop + 155, COL_BORDER);
+        drawRect(guiLeft + 3, guiTop + 3, guiLeft + 335, guiTop + 155, COL_BORDER);
         drawRect(guiLeft + LEFT_X0, guiTop + PANEL_TOP, guiLeft + LEFT_X1, guiTop + PANEL_BOTTOM, COL_PANEL_L);
         drawRect(guiLeft + RIGHT_X0, guiTop + PANEL_TOP, guiLeft + RIGHT_X1, guiTop + PANEL_BOTTOM, COL_PANEL_R);
 
         this.drawGradientRect(guiLeft + LEFT_X0, guiTop + 4, guiLeft + LEFT_X1, guiTop + 18, COL_BORDER_DARK, COL_PANEL_L);
         drawRect(guiLeft + LEFT_X0, guiTop + 18, guiLeft + LEFT_X1, guiTop + 19, COL_LINE);
 
-        drawRect(guiLeft + 70, guiTop + 154, guiLeft + 250, guiTop + 238, COL_BORDER);
-        drawRect(guiLeft + 71, guiTop + 155, guiLeft + 249, guiTop + 237, COL_PANEL_R);
+        drawRect(guiLeft + 79, guiTop + 154, guiLeft + 259, guiTop + 238, COL_BORDER);
+        drawRect(guiLeft + 80, guiTop + 155, guiLeft + 258, guiTop + 237, COL_PANEL_R);
 
-        int invX = guiLeft + 79;
+        int invX = guiLeft + 88;
         int invY = guiTop + 158;
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
@@ -712,7 +712,7 @@ public class GuiListWorkbench extends GuiContainer {
                 RenderHelper.disableStandardItemLighting();
                 GlStateManager.popMatrix();
 
-                String displayName = this.fontRenderer.trimStringToWidth(primaryResult.getDisplayName(), 112);
+                String displayName = this.fontRenderer.trimStringToWidth(primaryResult.getDisplayName(), 130);
                 this.fontRenderer.drawStringWithShadow(displayName, rightX + 38, guiTop + 10, COL_ACCENT);
             }
 
@@ -729,7 +729,7 @@ public class GuiListWorkbench extends GuiContainer {
 
             if (showingActive && total > 0) {
                 int barX0 = rightX + 38;
-                int barX1 = guiLeft + 308;
+                int barX1 = guiLeft + 326;
                 drawRect(barX0, guiTop + 33, barX1, guiTop + 38, COL_SLOT_BG);
                 float frac = Math.max(0.0f, Math.min(1.0f, (float) progress / (float) total));
                 drawRect(barX0 + 1, guiTop + 34, barX0 + 1 + (int) ((barX1 - barX0 - 2) * frac), guiTop + 37, COL_ACCENT);
@@ -759,7 +759,7 @@ public class GuiListWorkbench extends GuiContainer {
 
             this.fontRenderer.drawString("Item", rightX, guiTop + 48, COL_TEXT_DIM);
             String haveNeed = "Have / Need";
-            this.fontRenderer.drawString(haveNeed, guiLeft + 310 - this.fontRenderer.getStringWidth(haveNeed), guiTop + 48, COL_TEXT_DIM);
+            this.fontRenderer.drawString(haveNeed, guiLeft + 328 - this.fontRenderer.getStringWidth(haveNeed), guiTop + 48, COL_TEXT_DIM);
             drawRect(guiLeft + RIGHT_X0, guiTop + 58, guiLeft + RIGHT_X1, guiTop + 59, COL_LINE);
 
             int totalReqs = recipeToShow.inputs.size();
@@ -767,7 +767,7 @@ public class GuiListWorkbench extends GuiContainer {
 
             int maxReqScroll = getMaxReqScroll();
             if (maxReqScroll > 0) {
-                int reqScrollX = guiLeft + 310;
+                int reqScrollX = guiLeft + 328;
                 float reqFrac = reqScrollPos / maxReqScroll;
                 drawRect(reqScrollX, reqListTop, reqScrollX + 3, reqListTop + REQ_HEIGHT, COL_SLOT_BG);
 
@@ -789,7 +789,7 @@ public class GuiListWorkbench extends GuiContainer {
 
                 int rowY = reqListTop + i * REQ_ROW_HEIGHT;
 
-                if (i % 2 == 0) drawRect(guiLeft + 137, rowY - 1, guiLeft + 306, rowY + 13, 0x11FFFFFF);
+                if (i % 2 == 0) drawRect(guiLeft + 137, rowY - 1, guiLeft + 324, rowY + 13, 0x11FFFFFF);
 
                 GlStateManager.pushMatrix();
                 GlStateManager.scale(0.75f, 0.75f, 1.0f);
@@ -798,7 +798,7 @@ public class GuiListWorkbench extends GuiContainer {
                 RenderHelper.disableStandardItemLighting();
                 GlStateManager.popMatrix();
 
-                String ingName = this.fontRenderer.trimStringToWidth(reqStack.getDisplayName(), 92);
+                String ingName = this.fontRenderer.trimStringToWidth(reqStack.getDisplayName(), 110);
                 this.fontRenderer.drawString(ingName, rightX + 18, rowY + 3, COL_TEXT);
 
                 int have = countItemInInventory(ing);
@@ -807,7 +807,7 @@ public class GuiListWorkbench extends GuiContainer {
                 int color = have >= totalNeed ? 0xFF55FF55 : 0xFFFF5555;
 
                 String counts = have + " / " + totalNeed;
-                this.fontRenderer.drawString(counts, guiLeft + 302 - this.fontRenderer.getStringWidth(counts), rowY + 3, color);
+                this.fontRenderer.drawString(counts, guiLeft + 320 - this.fontRenderer.getStringWidth(counts), rowY + 3, color);
             }
 
             GlStateManager.popMatrix();
@@ -830,14 +830,15 @@ public class GuiListWorkbench extends GuiContainer {
 
         int outX = guiLeft + 260;
         int outY = guiTop + 122;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < TileEntityListWorkbench.OUTPUT_SLOTS; i++) {
             drawRect(outX + i * 18 - 1, outY - 1, outX + i * 18 + 17, outY + 17, COL_BORDER);
             drawRect(outX + i * 18, outY, outX + i * 18 + 16, outY + 16, COL_PANEL_L);
             drawRect(outX + i * 18, outY, outX + i * 18 + 16, outY + 1, 0x55000000);
             drawRect(outX + i * 18, outY, outX + i * 18 + 1, outY + 16, 0x55000000);
         }
         String outLabel = "Output";
-        this.fontRenderer.drawString(outLabel, outX + 27 - this.fontRenderer.getStringWidth(outLabel) / 2, outY + 20, COL_TEXT_DIM);
+        int outWidth = TileEntityListWorkbench.OUTPUT_SLOTS * 18 - 2;
+        this.fontRenderer.drawString(outLabel, outX + outWidth / 2 - this.fontRenderer.getStringWidth(outLabel) / 2, outY + 20, COL_TEXT_DIM);
     }
 
     private int getQueueSlotX(int index) {
@@ -932,7 +933,7 @@ public class GuiListWorkbench extends GuiContainer {
             }
 
             if (getMaxReqScroll() > 0) {
-                int reqScrollX = guiLeft + 310;
+                int reqScrollX = guiLeft + 328;
                 int reqListTop = guiTop + REQ_TOP;
                 if (mouseX >= reqScrollX - 2 && mouseX <= reqScrollX + 5 && mouseY >= reqListTop && mouseY <= reqListTop + REQ_HEIGHT) {
                     float frac = reqScrollPos / getMaxReqScroll();
