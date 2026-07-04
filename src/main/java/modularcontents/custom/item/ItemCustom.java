@@ -1,9 +1,19 @@
 package modularcontents.custom.item;
 
+import modularcontents.custom.entity.EntityAirdrop;
+import modularcontents.custom.entity.EntitySignalFlare;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -27,16 +37,100 @@ public class ItemCustom extends Item {
 
         // Creative Tab Logic
         boolean foundTab = false;
-        for (net.minecraft.creativetab.CreativeTabs tab : net.minecraft.creativetab.CreativeTabs.CREATIVE_TAB_ARRAY) {
-            if (tab.getTabLabel().equalsIgnoreCase(info.creativeTab)) {
-                this.setCreativeTab(tab);
-                foundTab = true;
-                break;
+
+        // Check our custom tabs first
+        if (modularcontents.custom.tab.CustomTabManager.CUSTOM_TABS.containsKey(info.creativeTab)) {
+            this.setCreativeTab(modularcontents.custom.tab.CustomTabManager.CUSTOM_TABS.get(info.creativeTab));
+            foundTab = true;
+        } else {
+            // Check vanilla/other mod tabs
+            for (net.minecraft.creativetab.CreativeTabs tab : net.minecraft.creativetab.CreativeTabs.CREATIVE_TAB_ARRAY) {
+                if (tab.getTabLabel().equalsIgnoreCase(info.creativeTab)) {
+                    this.setCreativeTab(tab);
+                    foundTab = true;
+                    break;
+                }
             }
         }
+
         if (!foundTab) {
             this.setCreativeTab(modularcontents.ModularcontentsMod.MODULAR_TAB);
         }
+    }
+
+    @Override
+    public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer playerIn, EnumHand handIn) {
+        ItemStack itemstack = playerIn.getHeldItem(handIn);
+
+        if (this.info.airdropCaller != null) {
+            CustomItemInfo.AirdropCallerInfo callerInfo = this.info.airdropCaller;
+
+            if (callerInfo.isFlare) {
+                worldIn.playSound(null, playerIn.posX, playerIn.posY, playerIn.posZ, SoundEvents.ENTITY_SNOWBALL_THROW, SoundCategory.NEUTRAL, 0.5F, 0.4F / (itemRand.nextFloat() * 0.4F + 0.8F));
+
+                if (!worldIn.isRemote) {
+                    EntitySignalFlare flare = new EntitySignalFlare(worldIn, playerIn);
+
+                    // override fuse time if provided
+                    int fuse = callerInfo.delayMin;
+                    if (callerInfo.delayMax > callerInfo.delayMin) {
+                        fuse += worldIn.rand.nextInt(callerInfo.delayMax - callerInfo.delayMin + 1);
+                    }
+                    flare.getEntityData().setInteger("Fuse", fuse); // Need to adjust flare to accept custom fuse but NBT works
+
+                    // If custom loot table specified, save it for the flare to pass on (Requires minor EntitySignalFlare update)
+                    if (callerInfo.lootTable != null && !callerInfo.lootTable.isEmpty()) {
+                        flare.getEntityData().setString("LootTable", callerInfo.lootTable);
+                    }
+
+                    flare.shoot(playerIn, playerIn.rotationPitch, playerIn.rotationYaw, 0.0F, 1.5F, 1.0F);
+                    worldIn.spawnEntity(flare);
+                }
+            } else {
+                if (!worldIn.isRemote) {
+                    double distance = callerInfo.distanceMin;
+                    if (callerInfo.distanceMax > callerInfo.distanceMin) {
+                        distance += worldIn.rand.nextDouble() * (callerInfo.distanceMax - callerInfo.distanceMin);
+                    }
+
+                    double angle = worldIn.rand.nextDouble() * Math.PI * 2;
+                    double targetX = playerIn.posX + Math.cos(angle) * distance;
+                    double targetZ = playerIn.posZ + Math.sin(angle) * distance;
+                    double targetY = 250.0D;
+
+                    int delayTicks = callerInfo.delayMin;
+                    if (callerInfo.delayMax > callerInfo.delayMin) {
+                        delayTicks += worldIn.rand.nextInt(callerInfo.delayMax - callerInfo.delayMin + 1);
+                    }
+
+                    EntityAirdrop airdrop = new EntityAirdrop(worldIn, targetX, targetY, targetZ);
+                    airdrop.setDelayAndCaller(delayTicks, playerIn.getName(), false, targetX, targetZ);
+
+                    if (callerInfo.lootTable != null && !callerInfo.lootTable.isEmpty()) {
+                        airdrop.setLootTable(callerInfo.lootTable);
+                    }
+
+                    worldIn.spawnEntity(airdrop);
+
+                    int seconds = delayTicks / 20;
+                    playerIn.sendMessage(new TextComponentString(TextFormatting.GREEN + "Airdrop requested! Coordinates: X: " + (int)targetX + ", Z: " + (int)targetZ + ". ETA: " + seconds + " seconds."));
+                }
+            }
+
+            if (!playerIn.capabilities.isCreativeMode) {
+                if (callerInfo.consumeOnUse) {
+                    if (this.isDamageable()) {
+                        itemstack.damageItem(1, playerIn);
+                    } else {
+                        itemstack.shrink(1);
+                    }
+                }
+            }
+
+            return new ActionResult<>(EnumActionResult.SUCCESS, itemstack);
+        }
+
+        return super.onItemRightClick(worldIn, playerIn, handIn);
     }
 
     @Override

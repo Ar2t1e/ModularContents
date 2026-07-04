@@ -53,10 +53,23 @@ import modularcontents.custom.inventory.ContainerAirdrop;
 import modularcontents.custom.gui.GuiAirdrop;
 
 import modularcontents.custom.entity.EntityAirdrop;
+import modularcontents.custom.entity.EntitySignalFlare;
 import modularcontents.custom.entity.RenderAirdrop;
 import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraft.util.ResourceLocation;
+import modularcontents.custom.block.BlockLaptop;
+import modularcontents.custom.network.PacketLaptopAirdrop;
+import modularcontents.custom.network.PacketLaptopAirdropHandler;
+import modularcontents.custom.gui.GuiLaptop;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.client.gui.GuiScreen;
+import modularcontents.custom.event.GlobalAirdropHandler;
+
+import modularcontents.custom.network.PacketOpenCreator;
+import modularcontents.custom.network.PacketOpenCreatorHandler;
 
 @Mod(modid = ModularcontentsMod.MODID, version = ModularcontentsMod.VERSION, name = "ModularContents")
 @Mod.EventBusSubscriber
@@ -83,22 +96,32 @@ public class ModularcontentsMod implements IGuiHandler {
 
     public static Block airdrop = new BlockAirdrop();
     public static Item airdrop_item = new ItemBlock(airdrop).setRegistryName(airdrop.getRegistryName());
+    public static Block laptop = new BlockLaptop();
+    public static Item laptop_item = new ItemBlock(laptop).setRegistryName(laptop.getRegistryName());
+    public static Item signal_flare = new modularcontents.custom.item.ItemSignalFlare();
+    public static Item radio = new modularcontents.custom.item.ItemRadio();
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
         // Load custom config
         ModularContentsConfig.load(event.getModConfigurationDirectory().getParentFile());
 
+        MinecraftForge.EVENT_BUS.register(GlobalAirdropHandler.class);
+
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "airdrop"), EntityAirdrop.class, "Airdrop", 1, instance, 64, 1, true);
+        EntityRegistry.registerModEntity(new ResourceLocation(MODID, "signal_flare"), EntitySignalFlare.class, "SignalFlare", 2, instance, 64, 1, true);
 
         if (event.getSide() == Side.CLIENT) {
+            modularcontents.custom.keybind.KeybindManager.register();
             RenderingRegistry.registerEntityRenderingHandler(EntityAirdrop.class, RenderAirdrop::new);
+            RenderingRegistry.registerEntityRenderingHandler(EntitySignalFlare.class, manager -> new net.minecraft.client.renderer.entity.RenderSnowball<>(manager, signal_flare, net.minecraft.client.Minecraft.getMinecraft().getRenderItem()));
         }
 
         // Setup directories for custom recipes
         ListWorkbenchRecipeManager.setupDirectories(event.getModConfigurationDirectory().getParentFile());
 
-        // Load custom items JSON definitions BEFORE item registration
+        // Load custom tabs and items JSON definitions BEFORE item registration
+        modularcontents.custom.tab.CustomTabManager.loadTabs(event.getModConfigurationDirectory().getParentFile());
         CustomItemManager.loadItems(event.getModConfigurationDirectory().getParentFile());
 
         if (event.getSide() == Side.CLIENT) {
@@ -112,6 +135,8 @@ public class ModularcontentsMod implements IGuiHandler {
         int packetId = 0;
         PACKET_HANDLER.registerMessage(PacketCraftStartHandler.class, PacketCraftStart.class, packetId++, Side.SERVER);
         PACKET_HANDLER.registerMessage(PacketCraftCancelHandler.class, PacketCraftCancel.class, packetId++, Side.SERVER);
+        PACKET_HANDLER.registerMessage(PacketLaptopAirdropHandler.class, PacketLaptopAirdrop.class, packetId++, Side.SERVER);
+        PACKET_HANDLER.registerMessage(PacketOpenCreatorHandler.class, PacketOpenCreator.class, packetId++, Side.SERVER);
     }
 
     @SideOnly(Side.CLIENT)
@@ -150,6 +175,7 @@ public class ModularcontentsMod implements IGuiHandler {
     public void serverLoad(FMLServerStartingEvent event) {
         // Load JSON recipes when server starts
         ListWorkbenchRecipeManager.loadRecipes(event.getServer().getDataDirectory());
+        modularcontents.custom.loot.AirdropLootManager.loadLootTables(event.getServer().getDataDirectory());
 
         // Register in-game commands
         event.registerServerCommand(new CommandModularContents());
@@ -159,6 +185,8 @@ public class ModularcontentsMod implements IGuiHandler {
     public static void registerBlocks(RegistryEvent.Register<Block> event) {
         event.getRegistry().register(custom_workbench);
         event.getRegistry().register(custom_workbench_part);
+        event.getRegistry().register(airdrop);
+        event.getRegistry().register(laptop);
         GameRegistry.registerTileEntity(TileEntityListWorkbench.class, "modularcontents:tile_list_workbench");
 
         event.getRegistry().register(airdrop);
@@ -169,6 +197,9 @@ public class ModularcontentsMod implements IGuiHandler {
     public static void registerItems(RegistryEvent.Register<Item> event) {
         event.getRegistry().register(custom_workbench_item);
         event.getRegistry().register(airdrop_item);
+        event.getRegistry().register(laptop_item);
+        event.getRegistry().register(signal_flare);
+        event.getRegistry().register(radio);
 
         for (CustomItemInfo info : CustomItemManager.CUSTOM_ITEMS.values()) {
             Item item = new ItemCustom(info);
@@ -181,6 +212,9 @@ public class ModularcontentsMod implements IGuiHandler {
     public static void registerModels(ModelRegistryEvent event) {
         ModelLoader.setCustomModelResourceLocation(custom_workbench_item, 0, new ModelResourceLocation(custom_workbench_item.getRegistryName(), "inventory"));
         ModelLoader.setCustomModelResourceLocation(airdrop_item, 0, new ModelResourceLocation(airdrop_item.getRegistryName(), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(laptop_item, 0, new ModelResourceLocation(laptop_item.getRegistryName(), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(signal_flare, 0, new ModelResourceLocation(signal_flare.getRegistryName(), "inventory"));
+        ModelLoader.setCustomModelResourceLocation(radio, 0, new ModelResourceLocation(radio.getRegistryName(), "inventory"));
 
         for (CustomItemInfo info : CustomItemManager.CUSTOM_ITEMS.values()) {
             Item item = Item.getByNameOrId("modularcontents:" + info.id);
@@ -208,6 +242,9 @@ public class ModularcontentsMod implements IGuiHandler {
                 return new ContainerAirdrop(player.inventory, (TileEntityAirdrop) te);
             }
         }
+        if (id == 4) {
+            return new modularcontents.custom.inventory.ContainerContentCreator(player.inventory);
+        }
         return null;
     }
 
@@ -224,6 +261,12 @@ public class ModularcontentsMod implements IGuiHandler {
             if (te instanceof TileEntityAirdrop) {
                 return new GuiAirdrop(player.inventory, (TileEntityAirdrop) te);
             }
+        }
+        if (id == 3) {
+            return new GuiLaptop(world, new BlockPos(x, y, z));
+        }
+        if (id == 4) {
+            return new modularcontents.custom.gui.GuiContentCreator(player.inventory);
         }
         return null;
     }

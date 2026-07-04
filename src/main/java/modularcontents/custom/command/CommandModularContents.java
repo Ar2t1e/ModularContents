@@ -1,6 +1,7 @@
 package modularcontents.custom.command;
 
 import modularcontents.custom.recipe.ListWorkbenchRecipeManager;
+import modularcontents.custom.loot.AirdropLootManager;
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
@@ -12,6 +13,7 @@ import net.minecraft.util.text.TextFormatting;
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 public class CommandModularContents extends CommandBase {
 
@@ -38,29 +40,42 @@ public class CommandModularContents extends CommandBase {
     @Override
     public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
-            sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "Reloading ModularContents recipes..."));
+            sender.sendMessage(new TextComponentString(TextFormatting.YELLOW + "Reloading ModularContents recipes and loot tables..."));
 
             // Reload recipes from JSON
             ListWorkbenchRecipeManager.loadRecipes(server.getDataDirectory());
+            // Reload loot tables
+            AirdropLootManager.loadLootTables(server.getDataDirectory());
 
-            int count = ListWorkbenchRecipeManager.getAllRecipes().size();
-            sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Successfully reloaded " + count + " recipes!"));
+            int recipeCount = ListWorkbenchRecipeManager.getAllRecipes().size();
+            int lootCount = AirdropLootManager.LOOT_TABLES.size();
+            sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Successfully reloaded " + recipeCount + " recipes and " + lootCount + " loot tables!"));
         } else if (args.length > 0 && args[0].equalsIgnoreCase("airdrop")) {
             if (args.length >= 3) {
                 try {
                     double x = parseCoordinate(sender.getPosition().getX(), args[1], true).getResult();
                     double z = parseCoordinate(sender.getPosition().getZ(), args[2], true).getResult();
 
+                    String lootTable = "";
+                    if (args.length >= 4) {
+                        lootTable = args[3];
+                    }
+
                     net.minecraft.world.World world = sender.getEntityWorld();
                     modularcontents.custom.entity.EntityAirdrop airdrop = new modularcontents.custom.entity.EntityAirdrop(world, x, 250.0D, z);
+
+                    if (!lootTable.isEmpty()) {
+                        airdrop.setLootTable(lootTable);
+                    }
+
                     world.spawnEntity(airdrop);
 
-                    sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Airdrop spawned at X: " + (int)x + " Z: " + (int)z));
+                    sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Airdrop spawned at X: " + (int)x + " Z: " + (int)z + (lootTable.isEmpty() ? "" : " [Loot: " + lootTable + "]")));
                 } catch (Exception e) {
                     sender.sendMessage(new TextComponentString(TextFormatting.RED + "Invalid coordinates"));
                 }
             } else {
-                sender.sendMessage(new TextComponentString(TextFormatting.RED + "Usage: /modularcontents airdrop <x> <z>"));
+                sender.sendMessage(new TextComponentString(TextFormatting.RED + "Usage: /modularcontents airdrop <x> <z> [loot_table]"));
             }
         } else {
             sender.sendMessage(new TextComponentString(TextFormatting.RED + "Usage: " + getUsage(sender)));
@@ -71,6 +86,8 @@ public class CommandModularContents extends CommandBase {
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) {
             return getListOfStringsMatchingLastWord(args, "reload", "airdrop");
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("airdrop")) {
+            return getListOfStringsMatchingLastWord(args, AirdropLootManager.LOOT_TABLES.keySet());
         }
         return super.getTabCompletions(server, sender, args, targetPos);
     }
