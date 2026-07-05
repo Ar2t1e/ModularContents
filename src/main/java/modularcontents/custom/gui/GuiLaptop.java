@@ -16,6 +16,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import org.lwjgl.opengl.GL11;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.lwjgl.input.Keyboard;
@@ -385,7 +386,7 @@ public class GuiLaptop extends GuiScreen {
         drawRect(x - 2, y - 2, x + size + 2, y + size + 2, 0xFF000000);
         drawRect(x - 1, y - 1, x + size + 1, y + size + 1, COL_ACCENT);
 
-        net.minecraft.util.ResourceLocation skin = this.mc.player.getLocationSkin();
+        ResourceLocation skin = this.mc.player.getLocationSkin();
         this.mc.getTextureManager().bindTexture(skin);
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 

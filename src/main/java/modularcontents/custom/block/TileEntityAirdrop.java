@@ -2,13 +2,18 @@ package modularcontents.custom.block;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntityLockableLoot;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.SoundCategory;
+import modularcontents.ModularcontentsMod;
 import modularcontents.custom.inventory.ContainerAirdrop;
 import modularcontents.custom.loot.AirdropLootManager;
 import java.util.List;
@@ -19,6 +24,7 @@ public class TileEntityAirdrop extends TileEntityLockableLoot implements ITickab
     private String customLootTableName = "";
     private boolean isCustomLootGenerated = false;
     private boolean isRedSmoke = true;
+    private boolean smokeSoundStarted = false;
 
     public void setLootTableName(String name) {
         this.customLootTableName = name;
@@ -34,7 +40,27 @@ public class TileEntityAirdrop extends TileEntityLockableLoot implements ITickab
     }
 
     @Override
+    public NBTTagCompound getUpdateTag() {
+        return this.writeToNBT(new NBTTagCompound());
+    }
+
+    @Override
+    public SPacketUpdateTileEntity getUpdatePacket() {
+        return new SPacketUpdateTileEntity(this.pos, 0, this.getUpdateTag());
+    }
+
+    @Override
+    public void onDataPacket(NetworkManager net, SPacketUpdateTileEntity pkt) {
+        this.readFromNBT(pkt.getNbtCompound());
+    }
+
+    @Override
     public void update() {
+        if (this.world.isRemote && !this.smokeSoundStarted) {
+            this.smokeSoundStarted = true;
+            ModularcontentsMod.proxy.playAirdropSmokeSound(this);
+        }
+
         if (this.world.isRemote && this.world.getTotalWorldTime() % 2 == 0) {
             float r = this.isRedSmoke ? 1.0F : 0.0F;
             float g = this.isRedSmoke ? 0.0F : 1.0F;
@@ -43,16 +69,7 @@ public class TileEntityAirdrop extends TileEntityLockableLoot implements ITickab
             double d1 = (double)this.pos.getY() + 1.0D + (this.world.rand.nextDouble() - 0.5D) * 0.2D;
             double d2 = (double)this.pos.getZ() + 0.5D + (this.world.rand.nextDouble() - 0.5D) * 0.2D;
 
-            try {
-                Class<?> clazz = Class.forName("modularcontents.custom.client.ClientProxyUtils");
-                java.lang.reflect.Method method = clazz.getMethod("spawnAirdropSmoke", net.minecraft.world.World.class, double.class, double.class, double.class, float.class, float.class, float.class);
-                method.invoke(null, this.world, d0, d1, d2, r, g, b);
-            } catch (Exception e) {}
-
-            // Hissing sound for the smoke flare
-            if (this.world.rand.nextInt(15) == 0) {
-                this.world.playSound(d0, d1, d2, net.minecraft.init.SoundEvents.BLOCK_FIRE_EXTINGUISH, net.minecraft.util.SoundCategory.BLOCKS, 0.2F, this.world.rand.nextFloat() * 0.4F + 0.8F, false);
-            }
+            ModularcontentsMod.proxy.spawnAirdropSmoke(this.world, d0, d1, d2, r, g, b);
         }
     }
 

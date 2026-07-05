@@ -1,8 +1,11 @@
 package modularcontents.custom.item;
 
+import modularcontents.ModularcontentsMod;
 import modularcontents.custom.entity.EntityAirdrop;
 import modularcontents.custom.entity.EntitySignalFlare;
+import modularcontents.custom.tab.CustomTabManager;
 import net.minecraft.client.resources.I18n;
+import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
@@ -39,12 +42,12 @@ public class ItemCustom extends Item {
         boolean foundTab = false;
 
         // Check our custom tabs first
-        if (modularcontents.custom.tab.CustomTabManager.CUSTOM_TABS.containsKey(info.creativeTab)) {
-            this.setCreativeTab(modularcontents.custom.tab.CustomTabManager.CUSTOM_TABS.get(info.creativeTab));
+        if (CustomTabManager.CUSTOM_TABS.containsKey(info.creativeTab)) {
+            this.setCreativeTab(CustomTabManager.CUSTOM_TABS.get(info.creativeTab));
             foundTab = true;
         } else {
             // Check vanilla/other mod tabs
-            for (net.minecraft.creativetab.CreativeTabs tab : net.minecraft.creativetab.CreativeTabs.CREATIVE_TAB_ARRAY) {
+            for (CreativeTabs tab : CreativeTabs.CREATIVE_TAB_ARRAY) {
                 if (tab.getTabLabel().equalsIgnoreCase(info.creativeTab)) {
                     this.setCreativeTab(tab);
                     foundTab = true;
@@ -54,7 +57,7 @@ public class ItemCustom extends Item {
         }
 
         if (!foundTab) {
-            this.setCreativeTab(modularcontents.ModularcontentsMod.MODULAR_TAB);
+            this.setCreativeTab(ModularcontentsMod.MODULAR_TAB);
         }
     }
 

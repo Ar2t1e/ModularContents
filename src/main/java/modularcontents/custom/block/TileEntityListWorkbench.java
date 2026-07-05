@@ -4,6 +4,7 @@ import modularcontents.custom.recipe.IngredientStack;
 import modularcontents.custom.recipe.ListWorkbenchRecipe;
 import modularcontents.custom.recipe.ListWorkbenchRecipeManager;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -12,20 +13,25 @@ import net.minecraft.network.play.server.SPacketUpdateTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ITickable;
+import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class TileEntityListWorkbench extends TileEntity implements ITickable {
 
     public static final int QUEUE_SIZE = 3;
+    public static final int OUTPUT_SLOTS = 4;
 
-    public final ItemStackHandler outputSlots = new ItemStackHandler(3) {
+    public final ItemStackHandler outputSlots = new ItemStackHandler(OUTPUT_SLOTS) {
         @Override
         protected void onContentsChanged(int slot) {
             markDirty();
@@ -69,7 +75,7 @@ public class TileEntityListWorkbench extends TileEntity implements ITickable {
                 if (wasCrafting != isCraftingNow) {
                     world.setBlockState(pos, state.withProperty(BlockListWorkbench.CRAFTING, isCraftingNow), 3);
 
-                    net.minecraft.util.math.BlockPos partPos = ((BlockListWorkbench) state.getBlock()).getPartPos(state, pos);
+                    BlockPos partPos = ((BlockListWorkbench) state.getBlock()).getPartPos(state, pos);
                     IBlockState partState = world.getBlockState(partPos);
                     if (partState.getBlock() instanceof BlockListWorkbenchPart) {
                         world.setBlockState(partPos, partState.withProperty(BlockListWorkbenchPart.CRAFTING, isCraftingNow), 3);
@@ -84,7 +90,7 @@ public class TileEntityListWorkbench extends TileEntity implements ITickable {
     }
 
     @Override
-    public boolean shouldRefresh(net.minecraft.world.World world, net.minecraft.util.math.BlockPos pos, IBlockState oldState, IBlockState newSate) {
+    public boolean shouldRefresh(World world, BlockPos pos, IBlockState oldState, IBlockState newSate) {
         return oldState.getBlock() != newSate.getBlock();
     }
 
@@ -92,7 +98,7 @@ public class TileEntityListWorkbench extends TileEntity implements ITickable {
         String id = queueRecipes[0];
         boolean moreAfter = getQueuedCrafts() > 1;
         if (!id.isEmpty()) {
-            this.world.playSound(null, this.pos, net.minecraft.init.SoundEvents.BLOCK_ANVIL_USE, net.minecraft.util.SoundCategory.BLOCKS, 0.4F, this.world.rand.nextFloat() * 0.2F + 0.9F);
+            this.world.playSound(null, this.pos, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.4F, this.world.rand.nextFloat() * 0.2F + 0.9F);
 
             ListWorkbenchRecipe recipe = ListWorkbenchRecipeManager.getRecipe(id);
             if (recipe != null) {
@@ -301,6 +307,16 @@ public class TileEntityListWorkbench extends TileEntity implements ITickable {
         super.readFromNBT(compound);
         if (compound.hasKey("OutputSlots")) {
             outputSlots.deserializeNBT((NBTTagCompound) compound.getTag("OutputSlots"));
+            if (outputSlots.getSlots() != OUTPUT_SLOTS) {
+                List<ItemStack> saved = new ArrayList<>();
+                for (int i = 0; i < outputSlots.getSlots(); i++) {
+                    saved.add(outputSlots.getStackInSlot(i));
+                }
+                outputSlots.setSize(OUTPUT_SLOTS);
+                for (int i = 0; i < saved.size() && i < OUTPUT_SLOTS; i++) {
+                    outputSlots.setStackInSlot(i, saved.get(i));
+                }
+            }
         }
         if (compound.hasKey("BufferSlots")) {
             bufferSlots.deserializeNBT((NBTTagCompound) compound.getTag("BufferSlots"));

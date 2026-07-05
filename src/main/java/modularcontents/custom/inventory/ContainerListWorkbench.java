@@ -21,7 +21,7 @@ public class ContainerListWorkbench extends Container {
 
         int outX = 260;
         int outY = 122;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < TileEntityListWorkbench.OUTPUT_SLOTS; i++) {
             this.addSlotToContainer(new SlotItemHandler(te.outputSlots, i, outX + i * 18, outY) {
                 @Override
                 public boolean isItemValid(ItemStack stack) {
@@ -30,7 +30,7 @@ public class ContainerListWorkbench extends Container {
             });
         }
 
-        int invX = 79;
+        int invX = 88;
         int invY = 158;
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
@@ -92,8 +92,9 @@ public class ContainerListWorkbench extends Container {
             ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
 
-            if (index >= 0 && index < 3) { // 3 Output slots
-                if (!this.mergeItemStack(itemstack1, 3, 39, true)) {
+            int outputCount = TileEntityListWorkbench.OUTPUT_SLOTS;
+            if (index >= 0 && index < outputCount) {
+                if (!this.mergeItemStack(itemstack1, outputCount, outputCount + 36, true)) {
                     return ItemStack.EMPTY;
                 }
                 slot.onSlotChange(itemstack1, itemstack);

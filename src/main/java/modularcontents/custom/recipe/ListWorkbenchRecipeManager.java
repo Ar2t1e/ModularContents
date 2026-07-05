@@ -2,22 +2,22 @@ package modularcontents.custom.recipe;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import modularcontents.custom.config.ModularContentsConfig;
+import modularcontents.custom.pack.PackZipUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 public class ListWorkbenchRecipeManager {
     private static final Logger LOGGER = LogManager.getLogger("ModularContents");
@@ -30,56 +30,35 @@ public class ListWorkbenchRecipeManager {
             rootPacksDir.mkdirs();
         }
 
-        if (modularcontents.custom.config.ModularContentsConfig.generateExamplePack && !hasAnyPack(rootPacksDir)) {
+        if (ModularContentsConfig.generateExamplePack && !hasAnyPack(rootPacksDir)) {
             createExamplePack(rootPacksDir);
         }
     }
+
+    private static final String[] CONTENT_FOLDERS = {"recipes", "loot_tables/airdrops", "items", "tabs"};
 
     private static boolean hasAnyPack(File rootPacksDir) {
         File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
         if (packDirs != null) {
             for (File packDir : packDirs) {
-                File recipeDir = new File(packDir, "recipes");
-                if (recipeDir.isDirectory()) {
-                    File[] jsons = recipeDir.listFiles((d, name) -> name.endsWith(".json"));
-                    if (jsons != null && jsons.length > 0) return true;
+                for (String folder : CONTENT_FOLDERS) {
+                    if (dirHasJsons(new File(packDir, folder))) return true;
                 }
             }
         }
 
-        File[] zips = rootPacksDir.listFiles((d, name) -> isZipName(name));
-        if (zips != null) {
-            for (File zip : zips) {
-                if (zipHasRecipes(zip)) return true;
+        for (File zip : PackZipUtils.listZips(rootPacksDir)) {
+            for (String folder : CONTENT_FOLDERS) {
+                if (PackZipUtils.zipHasEntryInFolder(zip, folder, ".json")) return true;
             }
         }
         return false;
     }
 
-    private static boolean isZipName(String name) {
-        String lower = name.toLowerCase(java.util.Locale.ROOT);
-        return lower.endsWith(".zip");
-    }
-
-    private static boolean isRecipeEntry(String entryName) {
-        String normalized = entryName.replace('\\', '/');
-        String lower = normalized.toLowerCase(java.util.Locale.ROOT);
-        return (lower.startsWith("recipes/") || lower.contains("/recipes/")) && lower.endsWith(".json");
-    }
-
-    private static boolean zipHasRecipes(File zipFile) {
-        try (ZipFile zip = new ZipFile(zipFile)) {
-            Enumeration<? extends ZipEntry> entries = zip.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                if (!entry.isDirectory() && isRecipeEntry(entry.getName())) {
-                    return true;
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to read pack archive: " + zipFile.getName(), e);
-        }
-        return false;
+    private static boolean dirHasJsons(File dir) {
+        if (!dir.isDirectory()) return false;
+        File[] jsons = dir.listFiles((d, name) -> name.endsWith(".json"));
+        return jsons != null && jsons.length > 0;
     }
 
     public static void loadRecipes(File gameDir) {
@@ -100,35 +79,14 @@ public class ListWorkbenchRecipeManager {
             }
         }
 
-        File[] zips = rootPacksDir.listFiles((d, name) -> isZipName(name));
-        if (zips != null) {
-            for (File zip : zips) {
-                loadRecipesFromZip(zip);
-            }
-        }
+        PackZipUtils.loadJsonEntries(rootPacksDir, "recipes", (fileName, reader, packName) -> loadRecipe(reader, packName));
     }
 
-    private static void loadRecipesFromZip(File zipFile) {
-        String packName = zipFile.getName();
-        try (ZipFile zip = new ZipFile(zipFile)) {
-            Enumeration<? extends ZipEntry> entries = zip.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = entries.nextElement();
-                if (entry.isDirectory() || !isRecipeEntry(entry.getName())) {
-                    continue;
-                }
-                try (Reader reader = new InputStreamReader(zip.getInputStream(entry), StandardCharsets.UTF_8)) {
-                    ListWorkbenchRecipe recipe = GSON.fromJson(reader, ListWorkbenchRecipe.class);
-                    if (recipe != null && recipe.id != null) {
-                        RECIPES.put(recipe.id, recipe);
-                        LOGGER.info("Loaded custom workbench recipe '" + recipe.id + "' from pack '" + packName + "'");
-                    }
-                } catch (Exception e) {
-                    LOGGER.error("Failed to load recipe: " + entry.getName() + " in pack: " + packName, e);
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("Failed to open pack archive: " + packName, e);
+    private static void loadRecipe(Reader reader, String packName) {
+        ListWorkbenchRecipe recipe = GSON.fromJson(reader, ListWorkbenchRecipe.class);
+        if (recipe != null && recipe.id != null) {
+            RECIPES.put(recipe.id, recipe);
+            LOGGER.info("Loaded custom workbench recipe '" + recipe.id + "' from pack '" + packName + "'");
         }
     }
 
@@ -166,28 +124,61 @@ public class ListWorkbenchRecipeManager {
             "vanilla_ore_processing.json"
     };
 
+    private static final String[] EXAMPLE_PACK_LOOT_TABLES = {
+            "basic_loot.json",
+            "medical_loot.json",
+            "military_loot.json"
+    };
+
     private static void createExamplePack(File rootPacksDir) {
         try {
-            File exampleRecipesDir = new File(new File(rootPacksDir, "example_pack"), "recipes");
-            exampleRecipesDir.mkdirs();
+            File examplePackDir = new File(rootPacksDir, "example_pack");
+            int recipes = copyExampleResources(new File(examplePackDir, "recipes"),
+                    "/assets/modularcontents/example_pack/recipes/", EXAMPLE_PACK_RECIPES);
+            int lootTables = copyExampleResources(new File(new File(examplePackDir, "loot_tables"), "airdrops"),
+                    "/assets/modularcontents/example_pack/loot_tables/airdrops/", EXAMPLE_PACK_LOOT_TABLES);
 
-            int copied = 0;
-            for (String fileName : EXAMPLE_PACK_RECIPES) {
-                String resourcePath = "/assets/modularcontents/example_pack/recipes/" + fileName;
-                try (java.io.InputStream in = ListWorkbenchRecipeManager.class.getResourceAsStream(resourcePath)) {
-                    if (in == null) {
-                        LOGGER.warn("Example pack resource missing in jar: " + resourcePath);
-                        continue;
-                    }
-                    java.nio.file.Files.copy(in, new File(exampleRecipesDir, fileName).toPath(),
-                            java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    copied++;
-                }
-            }
-
-            LOGGER.info("Created example content pack (" + copied + " recipes) in ModularContents/example_pack");
+            LOGGER.info("Created example content pack (" + recipes + " recipes, " + lootTables + " loot tables) in ModularContents/example_pack");
         } catch (Exception e) {
             LOGGER.error("Failed to create example content pack", e);
+        }
+    }
+
+    private static int copyExampleResources(File targetDir, String resourceBasePath, String[] fileNames) throws Exception {
+        targetDir.mkdirs();
+        int copied = 0;
+        for (String fileName : fileNames) {
+            String resourcePath = resourceBasePath + fileName;
+            try (InputStream in = ListWorkbenchRecipeManager.class.getResourceAsStream(resourcePath)) {
+                if (in == null) {
+                    LOGGER.warn("Example pack resource missing in jar: " + resourcePath);
+                    continue;
+                }
+                Files.copy(in, new File(targetDir, fileName).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                copied++;
+            }
+        }
+        return copied;
+    }
+
+    public static String toSyncJson() {
+        return GSON.toJson(RECIPES.values());
+    }
+
+    public static void applySyncedRecipes(String json) {
+        try {
+            ListWorkbenchRecipe[] recipes = GSON.fromJson(json, ListWorkbenchRecipe[].class);
+            RECIPES.clear();
+            if (recipes != null) {
+                for (ListWorkbenchRecipe recipe : recipes) {
+                    if (recipe != null && recipe.id != null) {
+                        RECIPES.put(recipe.id, recipe);
+                    }
+                }
+            }
+            LOGGER.info("Synced " + RECIPES.size() + " workbench recipes from server");
+        } catch (Exception e) {
+            LOGGER.error("Failed to apply synced recipes", e);
         }
     }
 

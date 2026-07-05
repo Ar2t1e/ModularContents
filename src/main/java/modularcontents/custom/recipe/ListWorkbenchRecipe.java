@@ -3,6 +3,7 @@ package modularcontents.custom.recipe;
 import net.minecraft.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class ListWorkbenchRecipe {
     public String id;
@@ -34,7 +35,7 @@ public class ListWorkbenchRecipe {
         return results;
     }
 
-    public List<ItemStack> rollResults(java.util.Random rand) {
+    public List<ItemStack> rollResults(Random rand) {
         List<ItemStack> results = new ArrayList<>();
         if (outputs != null && !outputs.isEmpty()) {
             List<IngredientStack> missed = new ArrayList<>();

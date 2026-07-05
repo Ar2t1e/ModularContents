@@ -1,5 +1,79 @@
-tile.custom_workbench.name=Crafting Workbench
-tile.custom_workbench_part.name=Crafting Workbench
-tile.airdrop.name=Airdrop
-
 itemGroup.modular_contents=§6Modular Contents
+
+tile.custom_workbench.name=Modular Workbench
+tile.custom_workbench_part.name=Modular Workbench
+tile.airdrop.name=Airdrop Crate
+tile.laptop.name=Laptop
+
+item.signal_flare.name=Signal Flare
+item.radio.name=Airdrop Radio
+
+container.airdrop=Airdrop Crate
+
+modularcontents.creator.title=CREATOR
+modularcontents.creator.tab.loot=Loot
+modularcontents.creator.tab.items=Items
+modularcontents.creator.tab.recipes=Recipes
+modularcontents.creator.tab.tabs=Tabs
+modularcontents.creator.generate=Generate JSON
+modularcontents.creator.nbt.on=NBT: ON
+modularcontents.creator.nbt.off=NBT: OFF
+modularcontents.creator.header.loot=Loot Items
+modularcontents.creator.header.item=Custom Item
+modularcontents.creator.header.outputs=Outputs
+modularcontents.creator.header.inputs=Inputs
+modularcontents.creator.header.tab=Creative Tab
+modularcontents.creator.label.file_name=File Name
+modularcontents.creator.label.weight=Weight
+modularcontents.creator.label.item_id=Item ID
+modularcontents.creator.label.display_name=Display Name
+modularcontents.creator.label.max_stack=Max Stack
+modularcontents.creator.label.durability=Durability
+modularcontents.creator.label.creative_tab=Creative Tab (id)
+modularcontents.creator.label.recipe_id=File Name (id)
+modularcontents.creator.label.category=Category
+modularcontents.creator.label.craft_ticks=Craft Ticks
+modularcontents.creator.label.min_drops=Min Drops
+modularcontents.creator.label.nbt=NBT Data (SNBT)
+modularcontents.creator.label.tab_id=Tab ID
+modularcontents.creator.label.icon=Icon Item
+modularcontents.creator.label.min=Min
+modularcontents.creator.label.max=Max
+modularcontents.creator.label.chance01=Chance 0-1
+modularcontents.creator.label.chance_pct=Chance %%
+modularcontents.creator.label.item_nbt=Item NBT:
+modularcontents.creator.yes=yes
+modularcontents.creator.no=no
+modularcontents.creator.slot=Slot %s: %s
+modularcontents.creator.empty=Empty
+modularcontents.creator.output=Output
+modularcontents.creator.input=Input
+modularcontents.creator.hint.loot.1=Click a slot to edit
+modularcontents.creator.hint.loot.2=min / max / chance
+modularcontents.creator.hint.recipe.1=Click a filled slot to edit
+modularcontents.creator.hint.recipe.2=chance and NBT data
+modularcontents.creator.info.loot.1=Saved to generated/
+modularcontents.creator.info.loot.2=loot_tables/airdrops
+modularcontents.creator.info.loot.4=Higher weight =
+modularcontents.creator.info.loot.5=more frequent drop.
+modularcontents.creator.info.items.1=Creates a custom item.
+modularcontents.creator.info.items.3=Saved to: ModularContents/
+modularcontents.creator.info.items.4=generated/items/
+modularcontents.creator.info.items.6=Texture (16x16 png):
+modularcontents.creator.info.items.7=<pack>/textures/items/
+modularcontents.creator.info.items.8=<item_id>.png
+modularcontents.creator.info.items.10=Loaded on game start.
+modularcontents.creator.info.tabs.1=Creates a creative tab.
+modularcontents.creator.info.tabs.3=Saved to: ModularContents/
+modularcontents.creator.info.tabs.4=generated/tabs/
+modularcontents.creator.info.tabs.6=Icon: e.g. minecraft:apple
+modularcontents.creator.info.tabs.8=Use the tab id in an item's
+modularcontents.creator.info.tabs.9='Creative Tab' field to put
+modularcontents.creator.info.tabs.10=custom items in this tab.
+modularcontents.creator.msg.empty_loot=Cannot generate empty loot table!
+modularcontents.creator.msg.recipe_needs=Recipe must have at least 1 input and 1 output!
+modularcontents.creator.msg.generated=Generated JSON: %s
+modularcontents.creator.msg.failed=Failed to write JSON: %s
+
+modularcontents.sync.missing_packs=[ModularContents] Content packs missing on your client: %s
+modularcontents.sync.missing_packs_hint=Items and textures from these packs will not display correctly. Install the packs into the ModularContents folder and restart the game.

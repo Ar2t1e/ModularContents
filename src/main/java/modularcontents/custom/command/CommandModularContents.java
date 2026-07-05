@@ -1,14 +1,19 @@
 package modularcontents.custom.command;
 
+import modularcontents.ModularcontentsMod;
+import modularcontents.custom.entity.EntityAirdrop;
+import modularcontents.custom.network.PacketSyncContent;
 import modularcontents.custom.recipe.ListWorkbenchRecipeManager;
 import modularcontents.custom.loot.AirdropLootManager;
 import net.minecraft.command.CommandBase;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -47,6 +52,11 @@ public class CommandModularContents extends CommandBase {
             // Reload loot tables
             AirdropLootManager.loadLootTables(server.getDataDirectory());
 
+            PacketSyncContent syncPacket = ModularcontentsMod.buildContentSyncPacket();
+            for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
+                ModularcontentsMod.PACKET_HANDLER.sendTo(syncPacket, player);
+            }
+
             int recipeCount = ListWorkbenchRecipeManager.getAllRecipes().size();
             int lootCount = AirdropLootManager.LOOT_TABLES.size();
             sender.sendMessage(new TextComponentString(TextFormatting.GREEN + "Successfully reloaded " + recipeCount + " recipes and " + lootCount + " loot tables!"));
@@ -61,8 +71,8 @@ public class CommandModularContents extends CommandBase {
                         lootTable = args[3];
                     }
 
-                    net.minecraft.world.World world = sender.getEntityWorld();
-                    modularcontents.custom.entity.EntityAirdrop airdrop = new modularcontents.custom.entity.EntityAirdrop(world, x, 250.0D, z);
+                    World world = sender.getEntityWorld();
+                    EntityAirdrop airdrop = new EntityAirdrop(world, x, 250.0D, z);
 
                     if (!lootTable.isEmpty()) {
                         airdrop.setLootTable(lootTable);

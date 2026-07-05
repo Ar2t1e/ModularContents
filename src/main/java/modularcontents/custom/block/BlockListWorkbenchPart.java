@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.world.IBlockAccess;
@@ -24,10 +25,10 @@ public class BlockListWorkbenchPart extends Block {
     public static final CustomPropertyBool CRAFTING = BlockListWorkbench.CRAFTING;
     public static final CustomPropertyDirection FACING = BlockListWorkbench.FACING;
 
-    private static final net.minecraft.util.math.AxisAlignedBB AABB_NORTH = new net.minecraft.util.math.AxisAlignedBB(0.0D, 0.0D, 0.0D, 2.0D, 1.0D, 1.0D);
-    private static final net.minecraft.util.math.AxisAlignedBB AABB_SOUTH = new net.minecraft.util.math.AxisAlignedBB(-1.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
-    private static final net.minecraft.util.math.AxisAlignedBB AABB_WEST = new net.minecraft.util.math.AxisAlignedBB(0.0D, 0.0D, -1.0D, 1.0D, 1.0D, 1.0D);
-    private static final net.minecraft.util.math.AxisAlignedBB AABB_EAST = new net.minecraft.util.math.AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 2.0D);
+    private static final AxisAlignedBB AABB_NORTH = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 2.0D, 1.0D, 1.0D);
+    private static final AxisAlignedBB AABB_SOUTH = new AxisAlignedBB(-1.0D, 0.0D, 0.0D, 1.0D, 1.0D, 1.0D);
+    private static final AxisAlignedBB AABB_WEST = new AxisAlignedBB(0.0D, 0.0D, -1.0D, 1.0D, 1.0D, 1.0D);
+    private static final AxisAlignedBB AABB_EAST = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 1.0D, 1.0D, 2.0D);
 
     public BlockListWorkbenchPart(Block master) {
         super(master.getDefaultState().getMaterial());
@@ -47,7 +48,7 @@ public class BlockListWorkbenchPart extends Block {
     }
 
     @Override
-    public net.minecraft.util.math.AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
+    public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
         switch (state.getValue(FACING)) {
             case SOUTH: return AABB_SOUTH;
             case WEST: return AABB_WEST;

@@ -1,5 +1,6 @@
 package modularcontents.custom.item;
 
+import modularcontents.ModularcontentsMod;
 import modularcontents.custom.entity.EntityAirdrop;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -17,7 +18,7 @@ public class ItemRadio extends Item {
         this.setUnlocalizedName("radio");
         this.setMaxStackSize(1);
         this.setMaxDamage(10); // 10 uses
-        this.setCreativeTab(modularcontents.ModularcontentsMod.MODULAR_TAB);
+        this.setCreativeTab(ModularcontentsMod.MODULAR_TAB);
     }
 
     @Override

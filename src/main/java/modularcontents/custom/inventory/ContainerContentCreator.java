@@ -14,23 +14,20 @@ public class ContainerContentCreator extends Container {
     public ContainerContentCreator(InventoryPlayer playerInv) {
         this.lootInventory = new InventoryBasic("Content Creator", false, 27);
 
-        // Loot Grid (3x9)
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                this.addSlotToContainer(new Slot(lootInventory, j + i * 9, 8 + j * 18, 55 + i * 18));
+                this.addSlotToContainer(new Slot(lootInventory, j + i * 9, 15 + j * 18, 43 + i * 18));
             }
         }
 
-        // Player Inventory
         for (int i = 0; i < 3; ++i) {
             for (int j = 0; j < 9; ++j) {
-                this.addSlotToContainer(new Slot(playerInv, j + i * 9 + 9, 8 + j * 18, 125 + i * 18));
+                this.addSlotToContainer(new Slot(playerInv, j + i * 9 + 9, 88 + j * 18, 158 + i * 18));
             }
         }
 
-        // Player Hotbar
         for (int k = 0; k < 9; ++k) {
-            this.addSlotToContainer(new Slot(playerInv, k, 8 + k * 18, 183));
+            this.addSlotToContainer(new Slot(playerInv, k, 88 + k * 18, 216));
         }
     }
 

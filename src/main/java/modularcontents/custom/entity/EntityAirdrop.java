@@ -5,9 +5,12 @@ import modularcontents.custom.loot.AirdropLootManager;
 import modularcontents.custom.block.TileEntityAirdrop;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.MoverType;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.entity.player.EntityPlayer;
@@ -72,8 +75,8 @@ public class EntityAirdrop extends Entity {
 
             // Plane sound right as it appears (delay ends soon or starts)
             if (this.delayTimer == 10 && !this.world.isRemote) {
-                 this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_ENDERDRAGON_FLAP, net.minecraft.util.SoundCategory.AMBIENT, 5.0F, 0.5F);
-                 this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_MINECART_RIDING, net.minecraft.util.SoundCategory.AMBIENT, 3.0F, 0.2F);
+                 this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_ENDERDRAGON_FLAP, SoundCategory.AMBIENT, 5.0F, 0.5F);
+                 this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_MINECART_RIDING, SoundCategory.AMBIENT, 3.0F, 0.2F);
             }
 
             this.motionY = 0;
@@ -83,8 +86,8 @@ public class EntityAirdrop extends Entity {
         }
 
         if (this.ticksExisted == 1 && !this.world.isRemote) {
-             this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_ENDERDRAGON_FLAP, net.minecraft.util.SoundCategory.AMBIENT, 5.0F, 0.5F);
-             this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_MINECART_RIDING, net.minecraft.util.SoundCategory.AMBIENT, 3.0F, 0.2F);
+             this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_ENDERDRAGON_FLAP, SoundCategory.AMBIENT, 5.0F, 0.5F);
+             this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_MINECART_RIDING, SoundCategory.AMBIENT, 3.0F, 0.2F);
         }
 
         this.prevPosX = this.posX;
@@ -97,18 +100,14 @@ public class EntityAirdrop extends Entity {
             this.motionY = -0.3D;
         }
 
-        this.move(net.minecraft.entity.MoverType.SELF, this.motionX, this.motionY, this.motionZ);
+        this.move(MoverType.SELF, this.motionX, this.motionY, this.motionZ);
 
         // Smoke particles
         if (this.world.isRemote) {
             float r = this.isRedSmoke ? 1.0F : 0.0F;
             float g = (r == 0.0F) ? 1.0F : 0.0F;
             float b = 0.0F;
-            try {
-                Class<?> clazz = Class.forName("modularcontents.custom.client.ClientProxyUtils");
-                java.lang.reflect.Method method = clazz.getMethod("spawnAirdropSmoke", net.minecraft.world.World.class, double.class, double.class, double.class, float.class, float.class, float.class);
-                method.invoke(null, this.world, this.posX, this.posY + 1.5D, this.posZ, r, g, b);
-            } catch (Exception e) {}
+            ModularcontentsMod.proxy.spawnAirdropSmoke(this.world, this.posX, this.posY + 1.5D, this.posZ, r, g, b);
         }
 
         if (!this.world.isRemote) {
@@ -117,14 +116,16 @@ public class EntityAirdrop extends Entity {
 
             if (this.onGround || !state.getBlock().isReplaceable(this.world, pos.down())) {
                 // Landed!
-                this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.BLOCK_ANVIL_LAND, net.minecraft.util.SoundCategory.BLOCKS, 2.0F, 0.7F);
-                this.world.playSound(null, this.posX, this.posY, this.posZ, net.minecraft.init.SoundEvents.ENTITY_GENERIC_EXPLODE, net.minecraft.util.SoundCategory.BLOCKS, 1.0F, 1.2F);
+                this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.BLOCK_ANVIL_LAND, SoundCategory.BLOCKS, 2.0F, 0.7F);
+                this.world.playSound(null, this.posX, this.posY, this.posZ, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 1.0F, 1.2F);
 
                 this.world.setBlockState(pos, ModularcontentsMod.airdrop.getDefaultState());
                 TileEntity te = this.world.getTileEntity(pos);
                 if (te instanceof TileEntityAirdrop) {
                     ((TileEntityAirdrop) te).setLootTableName(this.lootTableName);
                     ((TileEntityAirdrop) te).setRedSmoke(this.isRedSmoke);
+                    IBlockState placedState = this.world.getBlockState(pos);
+                    this.world.notifyBlockUpdate(pos, placedState, placedState, 3);
                 }
 
                 // Notify player

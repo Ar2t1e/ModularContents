@@ -1,5 +1,6 @@
 package modularcontents.custom.item;
 
+import modularcontents.ModularcontentsMod;
 import modularcontents.custom.entity.EntitySignalFlare;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
@@ -16,7 +17,7 @@ public class ItemSignalFlare extends Item {
         this.setRegistryName("signal_flare");
         this.setUnlocalizedName("signal_flare");
         this.setMaxStackSize(16);
-        this.setCreativeTab(modularcontents.ModularcontentsMod.MODULAR_TAB);
+        this.setCreativeTab(ModularcontentsMod.MODULAR_TAB);
     }
 
     @Override
