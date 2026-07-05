@@ -102,7 +102,7 @@ import java.util.ArrayList;
 @Mod.EventBusSubscriber
 public class ModularcontentsMod implements IGuiHandler {
     public static final String MODID = "modularcontents";
-    public static final String VERSION = "1.0.0";
+    public static final String VERSION = "0.3";
 
     @Mod.Instance(MODID)
     public static ModularcontentsMod instance;
