@@ -121,12 +121,12 @@ public class GuiContentCreator extends GuiContainer {
 
         Keyboard.enableRepeatEvents(true);
 
-        this.btnTabLoot = new GuiLaptop.FlatButton(0, guiLeft + 8, guiTop + 6, 50, 14, tr("tab.loot"));
-        this.btnTabItems = new GuiLaptop.FlatButton(1, guiLeft + 60, guiTop + 6, 50, 14, tr("tab.items"));
-        this.btnTabRecipes = new GuiLaptop.FlatButton(2, guiLeft + 112, guiTop + 6, 50, 14, tr("tab.recipes"));
-        this.btnTabTabs = new GuiLaptop.FlatButton(4, guiLeft + 164, guiTop + 6, 50, 14, tr("tab.tabs"));
-        this.btnTabZone = new GuiLaptop.FlatButton(6, guiLeft + 216, guiTop + 6, 50, 14, tr("tab.zone"));
-        this.btnTabNpcs = new GuiLaptop.FlatButton(8, guiLeft + 268, guiTop + 6, 50, 14, "NPCs");
+        this.btnTabLoot = new GuiLaptop.FlatButton(0, guiLeft + 130, guiTop + 6, 30, 14, "Loot");
+        this.btnTabItems = new GuiLaptop.FlatButton(1, guiLeft + 162, guiTop + 6, 30, 14, "Items");
+        this.btnTabRecipes = new GuiLaptop.FlatButton(2, guiLeft + 194, guiTop + 6, 35, 14, "Recipes");
+        this.btnTabTabs = new GuiLaptop.FlatButton(4, guiLeft + 231, guiTop + 6, 30, 14, "Tabs");
+        this.btnTabZone = new GuiLaptop.FlatButton(6, guiLeft + 263, guiTop + 6, 30, 14, "Zone");
+        this.btnTabNpcs = new GuiLaptop.FlatButton(8, guiLeft + 295, guiTop + 6, 30, 14, "NPCs");
         this.btnGenerate = new GuiLaptop.FlatButton(3, guiLeft + 198, guiTop + 138, 130, 14, tr("generate"));
         this.btnNbtToggle = new GuiLaptop.FlatButton(5, guiLeft + 70, guiTop + 134, 60, 14, tr("nbt.off"));
         this.btnOpenMap = new GuiLaptop.FlatButton(7, guiLeft + 40, guiTop + 80, 110, 18, tr("open_map"));
@@ -141,7 +141,7 @@ public class GuiContentCreator extends GuiContainer {
         this.buttonList.add(btnNbtToggle);
         this.buttonList.add(btnOpenMap);
 
-        this.txtPackName = createField(9, 14, 15, 100, 32, "example_pack");
+        this.txtPackName = createField(9, 45, 6, 80, 32, "example_pack");
         this.txtFileName = createField(10, 198, 37, 130, 32, "my_file");
 
         this.txtWeight = createField(11, 198, 65, 50, 4, "50");
@@ -227,7 +227,7 @@ public class GuiContentCreator extends GuiContainer {
         btnGenerate.visible = !isZone;
         btnOpenMap.visible = isZone;
 
-        txtPackName.setVisible(!isZone);
+        txtPackName.setVisible(true); // Always show pack name for all tabs
         txtFileName.setVisible(!isZone && !isNpc); // NPC uses its own ID field
         txtWeight.setVisible(isLoot);
         txtItemName.setVisible(isItem);
@@ -253,11 +253,13 @@ public class GuiContentCreator extends GuiContainer {
             Slot slot = container.inventorySlots.get(i);
             if (isLoot) {
                 slot.yPos = 43 + (i / 9) * 18;
+                slot.xPos = 14 + (i % 9) * 18;
             } else if (isRecp) {
                 slot.yPos = i < 9 ? 41 : 73 + (i / 9 - 1) * 18;
+                slot.xPos = 14 + (i % 9) * 18;
             } else if (isNpc && i < 6) { // 6 equipment slots for NPC
-                slot.yPos = 160;
-                slot.xPos = 14 + (i * 18);
+                slot.yPos = 160; // 160 is in the lower panel
+                slot.xPos = 15 + (i * 18);
             } else {
                 slot.yPos = -9999;
             }
@@ -344,6 +346,10 @@ public class GuiContentCreator extends GuiContainer {
 
         String title = tr("title");
         fontRenderer.drawStringWithShadow(title, guiLeft + 328 - fontRenderer.getStringWidth(title), guiTop + 9, COL_ACCENT);
+
+        if (txtPackName.getVisible()) {
+            fontRenderer.drawString("Pack:", guiLeft + 14, guiTop + 6, COL_TEXT_DIM);
+        }
 
         drawRect(guiLeft + 79, guiTop + 154, guiLeft + 259, guiTop + 238, COL_BORDER);
         drawRect(guiLeft + 80, guiTop + 155, guiLeft + 258, guiTop + 237, COL_PANEL_R);
@@ -476,6 +482,7 @@ public class GuiContentCreator extends GuiContainer {
 
         fontRenderer.drawString("Equipment Slots (Main, Off, Head, Chest, Legs, Feet)", guiLeft + 14, guiTop + 148, COL_TEXT_DIM);
 
+        // draw background boxes for the 6 equipment slots
         for (int i = 0; i < 6; ++i) {
             drawSlotBox(guiLeft + 14 + (i * 18), guiTop + 159, COL_SLOT_BG, false);
         }
@@ -543,7 +550,8 @@ public class GuiContentCreator extends GuiContainer {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (txtFileName.textboxKeyTyped(typedChar, keyCode)) return;
+        if (txtPackName.getVisible() && txtPackName.textboxKeyTyped(typedChar, keyCode)) return;
+        if (txtFileName.getVisible() && txtFileName.textboxKeyTyped(typedChar, keyCode)) return;
 
         int tab = container.activeTab;
         if (tab == TAB_LOOT) {
@@ -584,6 +592,15 @@ public class GuiContentCreator extends GuiContainer {
         } else if (tab == TAB_TABS) {
             if (txtTabName.textboxKeyTyped(typedChar, keyCode)) return;
             if (txtTabIcon.textboxKeyTyped(typedChar, keyCode)) return;
+        } else if (tab == TAB_NPC) {
+            if (txtNpcId.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtNpcName.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtNpcHealth.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtNpcSpeed.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtNpcDamage.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtNpcFollow.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtNpcShoot.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtNpcTexture.textboxKeyTyped(typedChar, keyCode)) return;
         }
         super.keyTyped(typedChar, keyCode);
     }
