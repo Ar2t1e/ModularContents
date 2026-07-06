@@ -53,6 +53,13 @@ public class GuiContentCreator extends GuiContainer {
     private GuiButton btnTabNpcs;
     private GuiButton btnTabBlocks;
     private GuiButton btnTabFood;
+
+    private GuiButton btnTabUp;
+    private GuiButton btnTabDown;
+    private GuiButton[] tabButtons;
+    private int tabScrollIndex = 0;
+    private static final int VISIBLE_TABS = 7;
+
     private GuiButton btnGenerate;
     private GuiButton btnNbtToggle;
     private GuiButton btnOpenMap;
@@ -141,26 +148,32 @@ public class GuiContentCreator extends GuiContainer {
 
         Keyboard.enableRepeatEvents(true);
 
-        this.btnTabLoot = new GuiLaptop.FlatButton(0, guiLeft + 130, guiTop + 4, 30, 14, "Loot");
-        this.btnTabItems = new GuiLaptop.FlatButton(1, guiLeft + 162, guiTop + 4, 35, 14, "Items");
-        this.btnTabBlocks = new GuiLaptop.FlatButton(9, guiLeft + 199, guiTop + 4, 35, 14, "Blocks");
-        this.btnTabFood = new GuiLaptop.FlatButton(10, guiLeft + 236, guiTop + 4, 30, 14, "Food");
-        this.btnTabRecipes = new GuiLaptop.FlatButton(2, guiLeft + 130, guiTop + 20, 45, 14, "Recipes");
-        this.btnTabTabs = new GuiLaptop.FlatButton(4, guiLeft + 177, guiTop + 20, 35, 14, "Tabs");
-        this.btnTabZone = new GuiLaptop.FlatButton(6, guiLeft + 214, guiTop + 20, 35, 14, "Zone");
-        this.btnTabNpcs = new GuiLaptop.FlatButton(8, guiLeft + 251, guiTop + 20, 35, 14, "NPCs");
+        this.btnTabLoot = new GuiLaptop.FlatButton(0, guiLeft + 338, guiTop + 20, 50, 14, "Loot");
+        this.btnTabItems = new GuiLaptop.FlatButton(1, guiLeft + 338, guiTop + 20, 50, 14, "Items");
+        this.btnTabBlocks = new GuiLaptop.FlatButton(9, guiLeft + 338, guiTop + 20, 50, 14, "Blocks");
+        this.btnTabFood = new GuiLaptop.FlatButton(10, guiLeft + 338, guiTop + 20, 50, 14, "Food");
+        this.btnTabRecipes = new GuiLaptop.FlatButton(2, guiLeft + 338, guiTop + 20, 50, 14, "Recipes");
+        this.btnTabTabs = new GuiLaptop.FlatButton(4, guiLeft + 338, guiTop + 20, 50, 14, "Tabs");
+        this.btnTabZone = new GuiLaptop.FlatButton(6, guiLeft + 338, guiTop + 20, 50, 14, "Zone");
+        this.btnTabNpcs = new GuiLaptop.FlatButton(8, guiLeft + 338, guiTop + 20, 50, 14, "NPCs");
+
+        this.tabButtons = new GuiButton[] {
+            btnTabItems, btnTabBlocks, btnTabFood, btnTabLoot, btnTabRecipes, btnTabTabs, btnTabZone, btnTabNpcs
+        };
+
+        this.btnTabUp = new GuiLaptop.FlatButton(20, guiLeft + 338, guiTop + 4, 50, 12, "^");
+        this.btnTabDown = new GuiLaptop.FlatButton(21, guiLeft + 338, guiTop + 140, 50, 12, "v");
+
         this.btnGenerate = new GuiLaptop.FlatButton(3, guiLeft + 198, guiTop + 138, 130, 14, tr("generate"));
         this.btnNbtToggle = new GuiLaptop.FlatButton(5, guiLeft + 70, guiTop + 134, 60, 14, tr("nbt.off"));
         this.btnOpenMap = new GuiLaptop.FlatButton(7, guiLeft + 40, guiTop + 80, 110, 18, tr("open_map"));
 
-        this.buttonList.add(btnTabLoot);
-        this.buttonList.add(btnTabItems);
-        this.buttonList.add(btnTabBlocks);
-        this.buttonList.add(btnTabFood);
-        this.buttonList.add(btnTabRecipes);
-        this.buttonList.add(btnTabTabs);
-        this.buttonList.add(btnTabZone);
-        this.buttonList.add(btnTabNpcs);
+        for (GuiButton btn : tabButtons) {
+            this.buttonList.add(btn);
+        }
+        this.buttonList.add(btnTabUp);
+        this.buttonList.add(btnTabDown);
+
         this.buttonList.add(btnGenerate);
         this.buttonList.add(btnNbtToggle);
         this.buttonList.add(btnOpenMap);
@@ -252,14 +265,21 @@ public class GuiContentCreator extends GuiContainer {
 
     private void updateTabState() {
         int tab = container.activeTab;
-        btnTabLoot.enabled = tab != TAB_LOOT;
-        btnTabItems.enabled = tab != TAB_ITEMS;
-        btnTabRecipes.enabled = tab != TAB_RECIPES;
-        btnTabTabs.enabled = tab != TAB_TABS;
-        btnTabZone.enabled = tab != TAB_ZONE;
-        btnTabNpcs.enabled = tab != TAB_NPC;
-        btnTabBlocks.enabled = tab != TAB_BLOCK;
-        btnTabFood.enabled = tab != TAB_FOOD;
+
+        // Dynamic vertical layout for tab buttons
+        btnTabUp.visible = tabScrollIndex > 0;
+        btnTabDown.visible = tabScrollIndex + VISIBLE_TABS < tabButtons.length;
+
+        for (int i = 0; i < tabButtons.length; i++) {
+            GuiButton btn = tabButtons[i];
+            if (i >= tabScrollIndex && i < tabScrollIndex + VISIBLE_TABS) {
+                btn.visible = true;
+                btn.y = guiTop + 20 + ((i - tabScrollIndex) * 17);
+            } else {
+                btn.visible = false;
+            }
+            btn.enabled = btn.id != tab;
+        }
 
         boolean isLoot = tab == TAB_LOOT;
         boolean isItem = tab == TAB_ITEMS;
@@ -731,7 +751,13 @@ public class GuiContentCreator extends GuiContainer {
 
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
-        if (button.id == 0 || button.id == 1 || button.id == 2 || button.id == 4 || button.id == 6 || button.id == 8 || button.id == 9 || button.id == 10) {
+        if (button.id == 20) { // Up
+            if (tabScrollIndex > 0) tabScrollIndex--;
+            updateTabState();
+        } else if (button.id == 21) { // Down
+            if (tabScrollIndex + VISIBLE_TABS < tabButtons.length) tabScrollIndex++;
+            updateTabState();
+        } else if (button.id == 0 || button.id == 1 || button.id == 2 || button.id == 4 || button.id == 6 || button.id == 8 || button.id == 9 || button.id == 10) {
             container.activeTab = button.id;
             updateTabState();
         } else if (button.id == 3) {
