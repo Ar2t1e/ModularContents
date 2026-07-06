@@ -4,14 +4,12 @@ import modularcontents.custom.block.BlockListWorkbench;
 import modularcontents.custom.block.BlockListWorkbenchPart;
 import modularcontents.custom.block.ItemBlockListWorkbench;
 import modularcontents.custom.block.TileEntityListWorkbench;
-import modularcontents.custom.entity.RenderSignalFlare;
 import modularcontents.custom.gui.GuiContentCreator;
 import modularcontents.custom.gui.GuiListWorkbench;
 import modularcontents.custom.inventory.ContainerContentCreator;
 import modularcontents.custom.inventory.ContainerListWorkbench;
 import modularcontents.custom.item.ItemRadio;
 import modularcontents.custom.item.ItemSignalFlare;
-import modularcontents.custom.keybind.KeybindManager;
 import modularcontents.custom.loot.AirdropLootManager;
 import modularcontents.custom.loot.EquipmentManager;
 import modularcontents.custom.pack.PackZipUtils;
@@ -82,8 +80,6 @@ import modularcontents.custom.gui.GuiAirdrop;
 
 import modularcontents.custom.entity.EntityAirdrop;
 import modularcontents.custom.entity.EntitySignalFlare;
-import modularcontents.custom.entity.RenderAirdrop;
-import net.minecraftforge.fml.client.registry.RenderingRegistry;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraft.util.ResourceLocation;
 import modularcontents.custom.block.BlockLaptop;
@@ -149,12 +145,6 @@ public class ModularcontentsMod implements IGuiHandler {
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "airdrop"), EntityAirdrop.class, "Airdrop", 1, instance, 64, 1, true);
         EntityRegistry.registerModEntity(new ResourceLocation(MODID, "signal_flare"), EntitySignalFlare.class, "SignalFlare", 2, instance, 64, 1, true);
 
-        if (event.getSide() == Side.CLIENT) {
-            KeybindManager.register();
-            RenderingRegistry.registerEntityRenderingHandler(EntityAirdrop.class, RenderAirdrop::new);
-            RenderingRegistry.registerEntityRenderingHandler(EntitySignalFlare.class, manager -> new RenderSignalFlare(manager, signal_flare, Minecraft.getMinecraft().getRenderItem()));
-        }
-
         // Setup directories for custom recipes
         ListWorkbenchRecipeManager.setupDirectories(event.getModConfigurationDirectory().getParentFile());
 
@@ -162,9 +152,7 @@ public class ModularcontentsMod implements IGuiHandler {
         CustomTabManager.loadTabs(event.getModConfigurationDirectory().getParentFile());
         CustomItemManager.loadItems(event.getModConfigurationDirectory().getParentFile());
 
-        if (event.getSide() == Side.CLIENT) {
-            injectCustomResourcePack(event.getModConfigurationDirectory().getParentFile());
-        }
+        proxy.preInit(event);
 
         // Register GUI handler
         NetworkRegistry.INSTANCE.registerGuiHandler(this, this);
@@ -200,33 +188,6 @@ public class ModularcontentsMod implements IGuiHandler {
     public static void onConfigChanged(net.minecraftforge.fml.client.event.ConfigChangedEvent.OnConfigChangedEvent event) {
         if (event.getModID().equals(MODID)) {
             ModularContentsConfig.syncConfig();
-        }
-    }
-
-    @SideOnly(Side.CLIENT)
-    private void injectCustomResourcePack(File gameDir) {
-        try {
-            ModularResourcePack pack = new ModularResourcePack(gameDir);
-            List<IResourcePack> defaultPacks = ReflectionHelper.getPrivateValue(Minecraft.class, Minecraft.getMinecraft(), "defaultResourcePacks", "field_110449_ao");
-            defaultPacks.add(pack);
-
-            IResourceManager manager = Minecraft.getMinecraft().getResourceManager();
-            if (manager instanceof SimpleReloadableResourceManager) {
-                Map<String, FallbackResourceManager> domainManagers = ReflectionHelper.getPrivateValue(SimpleReloadableResourceManager.class, (SimpleReloadableResourceManager) manager, "domainResourceManagers", "field_110548_a");
-                FallbackResourceManager fallback = domainManagers.get("modularcontents");
-                if (fallback != null) {
-                    fallback.addResourcePack(pack);
-                } else {
-                    fallback = new FallbackResourceManager(new MetadataSerializer());
-                    fallback.addResourcePack(pack);
-                    domainManagers.put("modularcontents", fallback);
-                }
-            }
-
-            System.out.println("[ModularContents] Successfully injected ModularResourcePack for dynamic textures!");
-        } catch (Exception e) {
-            System.out.println("[ModularContents] Failed to inject dynamic resource pack: " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
