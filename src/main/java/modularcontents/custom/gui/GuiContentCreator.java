@@ -42,6 +42,8 @@ public class GuiContentCreator extends GuiContainer {
     private static final int TAB_TABS = 4;
     private static final int TAB_ZONE = 6;
     private static final int TAB_NPC = 8;
+    private static final int TAB_BLOCK = 9;
+    private static final int TAB_FOOD = 10;
 
     private GuiButton btnTabLoot;
     private GuiButton btnTabItems;
@@ -49,6 +51,8 @@ public class GuiContentCreator extends GuiContainer {
     private GuiButton btnTabTabs;
     private GuiButton btnTabZone;
     private GuiButton btnTabNpcs;
+    private GuiButton btnTabBlocks;
+    private GuiButton btnTabFood;
     private GuiButton btnGenerate;
     private GuiButton btnNbtToggle;
     private GuiButton btnOpenMap;
@@ -83,6 +87,22 @@ public class GuiContentCreator extends GuiContainer {
     private GuiTextField txtNpcFollow;
     private GuiTextField txtNpcShoot;
     private GuiTextField txtNpcTexture;
+
+    private GuiTextField txtBlockHardness;
+    private GuiTextField txtBlockResist;
+    private GuiTextField txtBlockLight;
+    private GuiTextField txtBlockTool;
+    private GuiTextField txtBlockMat;
+    private GuiTextField txtBlockHarvest;
+
+    private GuiTextField txtFoodHeal;
+    private GuiTextField txtFoodSat;
+    private GuiTextField txtFoodMeat;
+    private GuiTextField txtFoodAlways;
+    private GuiTextField txtFoodEffect;
+    private GuiTextField txtFoodDur;
+    private GuiTextField txtFoodAmp;
+    private GuiTextField txtFoodProb;
 
     private final ContainerContentCreator container;
     private int selectedSlot = -1;
@@ -121,18 +141,22 @@ public class GuiContentCreator extends GuiContainer {
 
         Keyboard.enableRepeatEvents(true);
 
-        this.btnTabLoot = new GuiLaptop.FlatButton(0, guiLeft + 130, guiTop + 6, 30, 14, "Loot");
-        this.btnTabItems = new GuiLaptop.FlatButton(1, guiLeft + 162, guiTop + 6, 30, 14, "Items");
-        this.btnTabRecipes = new GuiLaptop.FlatButton(2, guiLeft + 194, guiTop + 6, 35, 14, "Recipes");
-        this.btnTabTabs = new GuiLaptop.FlatButton(4, guiLeft + 231, guiTop + 6, 30, 14, "Tabs");
-        this.btnTabZone = new GuiLaptop.FlatButton(6, guiLeft + 263, guiTop + 6, 30, 14, "Zone");
-        this.btnTabNpcs = new GuiLaptop.FlatButton(8, guiLeft + 295, guiTop + 6, 30, 14, "NPCs");
+        this.btnTabLoot = new GuiLaptop.FlatButton(0, guiLeft + 130, guiTop + 4, 30, 14, "Loot");
+        this.btnTabItems = new GuiLaptop.FlatButton(1, guiLeft + 162, guiTop + 4, 35, 14, "Items");
+        this.btnTabBlocks = new GuiLaptop.FlatButton(9, guiLeft + 199, guiTop + 4, 35, 14, "Blocks");
+        this.btnTabFood = new GuiLaptop.FlatButton(10, guiLeft + 236, guiTop + 4, 30, 14, "Food");
+        this.btnTabRecipes = new GuiLaptop.FlatButton(2, guiLeft + 130, guiTop + 20, 45, 14, "Recipes");
+        this.btnTabTabs = new GuiLaptop.FlatButton(4, guiLeft + 177, guiTop + 20, 35, 14, "Tabs");
+        this.btnTabZone = new GuiLaptop.FlatButton(6, guiLeft + 214, guiTop + 20, 35, 14, "Zone");
+        this.btnTabNpcs = new GuiLaptop.FlatButton(8, guiLeft + 251, guiTop + 20, 35, 14, "NPCs");
         this.btnGenerate = new GuiLaptop.FlatButton(3, guiLeft + 198, guiTop + 138, 130, 14, tr("generate"));
         this.btnNbtToggle = new GuiLaptop.FlatButton(5, guiLeft + 70, guiTop + 134, 60, 14, tr("nbt.off"));
         this.btnOpenMap = new GuiLaptop.FlatButton(7, guiLeft + 40, guiTop + 80, 110, 18, tr("open_map"));
 
         this.buttonList.add(btnTabLoot);
         this.buttonList.add(btnTabItems);
+        this.buttonList.add(btnTabBlocks);
+        this.buttonList.add(btnTabFood);
         this.buttonList.add(btnTabRecipes);
         this.buttonList.add(btnTabTabs);
         this.buttonList.add(btnTabZone);
@@ -141,8 +165,8 @@ public class GuiContentCreator extends GuiContainer {
         this.buttonList.add(btnNbtToggle);
         this.buttonList.add(btnOpenMap);
 
-        this.txtPackName = createField(9, 45, 6, 80, 32, "example_pack");
-        this.txtFileName = createField(10, 198, 37, 130, 32, "my_file");
+        this.txtPackName = createField(9, 45, 6, 80, 14, "example_pack");
+        this.txtFileName = createField(10, 198, 42, 130, 32, "my_file");
 
         this.txtWeight = createField(11, 198, 65, 50, 4, "50");
 
@@ -172,6 +196,22 @@ public class GuiContentCreator extends GuiContainer {
         this.txtNpcFollow = createField(31, 198, 45, 60, 5, "32.0");
         this.txtNpcShoot = createField(32, 268, 45, 60, 5, "16.0");
         this.txtNpcTexture = createField(33, 198, 73, 130, 64, "minecraft:textures/entity/steve.png");
+
+        this.txtBlockHardness = createField(34, 198, 70, 40, 5, "1.5");
+        this.txtBlockResist = createField(35, 258, 70, 40, 5, "10.0");
+        this.txtBlockLight = createField(36, 198, 98, 40, 5, "0.0");
+        this.txtBlockTool = createField(37, 258, 98, 60, 16, "pickaxe");
+        this.txtBlockMat = createField(38, 198, 126, 60, 16, "rock");
+        this.txtBlockHarvest = createField(39, 278, 126, 30, 2, "0");
+
+        this.txtFoodHeal = createField(40, 198, 70, 40, 3, "4");
+        this.txtFoodSat = createField(41, 258, 70, 40, 5, "0.3");
+        this.txtFoodMeat = createField(42, 198, 98, 40, 5, "false");
+        this.txtFoodAlways = createField(43, 258, 98, 40, 5, "false");
+        this.txtFoodEffect = createField(44, 198, 126, 130, 64, "");
+        this.txtFoodDur = createField(45, 14, 136, 40, 5, "100");
+        this.txtFoodAmp = createField(46, 64, 136, 30, 2, "0");
+        this.txtFoodProb = createField(47, 104, 136, 40, 5, "1.0");
 
         updateTabState();
     }
@@ -205,7 +245,9 @@ public class GuiContentCreator extends GuiContainer {
         return new GuiTextField[]{txtPackName, txtFileName, txtWeight, txtItemMin, txtItemMax, txtItemChance,
                 txtItemName, txtMaxStack, txtCreativeTab, txtMaxDamage,
                 txtRecipeCat, txtCraftTime, txtMinDrops, txtRecipeChance, txtRecipeNbt,
-                txtTabName, txtTabIcon, txtNpcId, txtNpcName, txtNpcHealth, txtNpcSpeed, txtNpcDamage, txtNpcFollow, txtNpcShoot, txtNpcTexture};
+                txtTabName, txtTabIcon, txtNpcId, txtNpcName, txtNpcHealth, txtNpcSpeed, txtNpcDamage, txtNpcFollow, txtNpcShoot, txtNpcTexture,
+                txtBlockHardness, txtBlockResist, txtBlockLight, txtBlockTool, txtBlockMat, txtBlockHarvest,
+                txtFoodHeal, txtFoodSat, txtFoodMeat, txtFoodAlways, txtFoodEffect, txtFoodDur, txtFoodAmp, txtFoodProb};
     }
 
     private void updateTabState() {
@@ -216,6 +258,8 @@ public class GuiContentCreator extends GuiContainer {
         btnTabTabs.enabled = tab != TAB_TABS;
         btnTabZone.enabled = tab != TAB_ZONE;
         btnTabNpcs.enabled = tab != TAB_NPC;
+        btnTabBlocks.enabled = tab != TAB_BLOCK;
+        btnTabFood.enabled = tab != TAB_FOOD;
 
         boolean isLoot = tab == TAB_LOOT;
         boolean isItem = tab == TAB_ITEMS;
@@ -223,6 +267,8 @@ public class GuiContentCreator extends GuiContainer {
         boolean isTabs = tab == TAB_TABS;
         boolean isZone = tab == TAB_ZONE;
         boolean isNpc = tab == TAB_NPC;
+        boolean isBlock = tab == TAB_BLOCK;
+        boolean isFood = tab == TAB_FOOD;
 
         btnGenerate.visible = !isZone;
         btnOpenMap.visible = isZone;
@@ -230,9 +276,9 @@ public class GuiContentCreator extends GuiContainer {
         txtPackName.setVisible(true); // Always show pack name for all tabs
         txtFileName.setVisible(!isZone && !isNpc); // NPC uses its own ID field
         txtWeight.setVisible(isLoot);
-        txtItemName.setVisible(isItem);
-        txtMaxStack.setVisible(isItem);
-        txtCreativeTab.setVisible(isItem);
+        txtItemName.setVisible(isItem || isBlock || isFood);
+        txtMaxStack.setVisible(isItem || isFood);
+        txtCreativeTab.setVisible(isItem || isBlock || isFood);
         txtMaxDamage.setVisible(isItem);
         txtRecipeCat.setVisible(isRecp);
         txtCraftTime.setVisible(isRecp);
@@ -248,6 +294,22 @@ public class GuiContentCreator extends GuiContainer {
         txtNpcFollow.setVisible(isNpc);
         txtNpcShoot.setVisible(isNpc);
         txtNpcTexture.setVisible(isNpc);
+
+        txtBlockHardness.setVisible(isBlock);
+        txtBlockResist.setVisible(isBlock);
+        txtBlockLight.setVisible(isBlock);
+        txtBlockTool.setVisible(isBlock);
+        txtBlockMat.setVisible(isBlock);
+        txtBlockHarvest.setVisible(isBlock);
+
+        txtFoodHeal.setVisible(isFood);
+        txtFoodSat.setVisible(isFood);
+        txtFoodMeat.setVisible(isFood);
+        txtFoodAlways.setVisible(isFood);
+        txtFoodEffect.setVisible(isFood);
+        txtFoodDur.setVisible(isFood);
+        txtFoodAmp.setVisible(isFood);
+        txtFoodProb.setVisible(isFood);
 
         for (int i = 0; i < 27; i++) {
             Slot slot = container.inventorySlots.get(i);
@@ -375,6 +437,10 @@ public class GuiContentCreator extends GuiContainer {
             drawZoneTab();
         } else if (tab == TAB_NPC) {
             drawNpcTab();
+        } else if (tab == TAB_BLOCK) {
+            drawBlockTab();
+        } else if (tab == TAB_FOOD) {
+            drawFoodTab();
         }
 
         for (GuiTextField field : allFields()) {
@@ -494,6 +560,37 @@ public class GuiContentCreator extends GuiContainer {
         }
     }
 
+    private void drawBlockTab() {
+        fontRenderer.drawString("Block Editor", guiLeft + 14, guiTop + 31, COL_ACCENT);
+        fontRenderer.drawString("ID:", guiLeft + 180, guiTop + 45, COL_TEXT_DIM);
+        fontRenderer.drawString("Name:", guiLeft + 160, guiTop + 73, COL_TEXT_DIM);
+        fontRenderer.drawString("Creative Tab:", guiLeft + 130, guiTop + 129, COL_TEXT_DIM);
+
+        fontRenderer.drawString("Hardness", guiLeft + 198, guiTop + 61, COL_TEXT_DIM);
+        fontRenderer.drawString("Resistance", guiLeft + 258, guiTop + 61, COL_TEXT_DIM);
+        fontRenderer.drawString("Light Lv", guiLeft + 198, guiTop + 89, COL_TEXT_DIM);
+        fontRenderer.drawString("Tool", guiLeft + 258, guiTop + 89, COL_TEXT_DIM);
+        fontRenderer.drawString("Material", guiLeft + 198, guiTop + 117, COL_TEXT_DIM);
+        fontRenderer.drawString("Harvest Lv", guiLeft + 268, guiTop + 117, COL_TEXT_DIM);
+    }
+
+    private void drawFoodTab() {
+        fontRenderer.drawString("Food Editor", guiLeft + 14, guiTop + 31, COL_ACCENT);
+        fontRenderer.drawString("ID:", guiLeft + 180, guiTop + 45, COL_TEXT_DIM);
+        fontRenderer.drawString("Name:", guiLeft + 160, guiTop + 73, COL_TEXT_DIM);
+        fontRenderer.drawString("Max Stack:", guiLeft + 145, guiTop + 101, COL_TEXT_DIM);
+        fontRenderer.drawString("Creative Tab:", guiLeft + 130, guiTop + 129, COL_TEXT_DIM);
+
+        fontRenderer.drawString("Heal", guiLeft + 198, guiTop + 61, COL_TEXT_DIM);
+        fontRenderer.drawString("Saturation", guiLeft + 258, guiTop + 61, COL_TEXT_DIM);
+        fontRenderer.drawString("Is Meat", guiLeft + 198, guiTop + 89, COL_TEXT_DIM);
+        fontRenderer.drawString("Always Edible", guiLeft + 250, guiTop + 89, COL_TEXT_DIM);
+        fontRenderer.drawString("Potion Effect", guiLeft + 198, guiTop + 117, COL_TEXT_DIM);
+        fontRenderer.drawString("Duration", guiLeft + 14, guiTop + 127, COL_TEXT_DIM);
+        fontRenderer.drawString("Amp", guiLeft + 64, guiTop + 127, COL_TEXT_DIM);
+        fontRenderer.drawString("Prob", guiLeft + 104, guiTop + 127, COL_TEXT_DIM);
+    }
+
     private String[] infoLines(String key, int count) {
         String[] lines = new String[count];
         for (int i = 0; i < count; i++) {
@@ -607,13 +704,34 @@ public class GuiContentCreator extends GuiContainer {
             if (txtNpcFollow.textboxKeyTyped(typedChar, keyCode)) return;
             if (txtNpcShoot.textboxKeyTyped(typedChar, keyCode)) return;
             if (txtNpcTexture.textboxKeyTyped(typedChar, keyCode)) return;
+        } else if (tab == TAB_BLOCK) {
+            if (txtBlockHardness.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtBlockResist.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtBlockLight.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtBlockTool.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtBlockMat.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtBlockHarvest.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtItemName.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtCreativeTab.textboxKeyTyped(typedChar, keyCode)) return;
+        } else if (tab == TAB_FOOD) {
+            if (txtFoodHeal.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtFoodSat.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtFoodMeat.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtFoodAlways.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtFoodEffect.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtFoodDur.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtFoodAmp.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtFoodProb.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtItemName.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtMaxStack.textboxKeyTyped(typedChar, keyCode)) return;
+            if (txtCreativeTab.textboxKeyTyped(typedChar, keyCode)) return;
         }
         super.keyTyped(typedChar, keyCode);
     }
 
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
-        if (button.id == 0 || button.id == 1 || button.id == 2 || button.id == 4 || button.id == 6 || button.id == 8) {
+        if (button.id == 0 || button.id == 1 || button.id == 2 || button.id == 4 || button.id == 6 || button.id == 8 || button.id == 9 || button.id == 10) {
             container.activeTab = button.id;
             updateTabState();
         } else if (button.id == 3) {
@@ -622,6 +740,8 @@ public class GuiContentCreator extends GuiContainer {
             else if (container.activeTab == TAB_RECIPES) generateRecipe();
             else if (container.activeTab == TAB_TABS) generateTab();
             else if (container.activeTab == TAB_NPC) generateNpc();
+            else if (container.activeTab == TAB_BLOCK) generateBlock();
+            else if (container.activeTab == TAB_FOOD) generateFood();
         } else if (button.id == 7) {
             this.mc.displayGuiScreen(new GuiZoneEquipment());
         } else if (button.id == 5 && selectedSlot != -1) {
@@ -796,6 +916,56 @@ public class GuiContentCreator extends GuiContainer {
         root.add("equipment", equipment);
 
         saveJsonFile(root, "npcs", fileName);
+    }
+
+    private void generateBlock() {
+        String id = txtFileName.getText().trim();
+        if (id.isEmpty()) id = "custom_block";
+        String fileName = id;
+        if (!fileName.endsWith(".json")) fileName += ".json";
+        else id = id.substring(0, id.length() - 5);
+
+        JsonObject root = new JsonObject();
+        root.addProperty("id", id);
+        root.addProperty("display_name", txtItemName.getText().trim());
+        root.addProperty("creative_tab", txtCreativeTab.getText().trim());
+        try { root.addProperty("hardness", Float.parseFloat(txtBlockHardness.getText().trim())); } catch (Exception ignored) {}
+        try { root.addProperty("resistance", Float.parseFloat(txtBlockResist.getText().trim())); } catch (Exception ignored) {}
+        try { root.addProperty("light_level", Float.parseFloat(txtBlockLight.getText().trim())); } catch (Exception ignored) {}
+        root.addProperty("tool_class", txtBlockTool.getText().trim());
+        root.addProperty("material", txtBlockMat.getText().trim());
+        try { root.addProperty("harvest_level", Integer.parseInt(txtBlockHarvest.getText().trim())); } catch (Exception ignored) {}
+
+        saveJsonFile(root, "blocks", fileName);
+    }
+
+    private void generateFood() {
+        String id = txtFileName.getText().trim();
+        if (id.isEmpty()) id = "custom_food";
+        String fileName = id;
+        if (!fileName.endsWith(".json")) fileName += ".json";
+        else id = id.substring(0, id.length() - 5);
+
+        JsonObject root = new JsonObject();
+        root.addProperty("id", id);
+        root.addProperty("display_name", txtItemName.getText().trim());
+        try { root.addProperty("max_stack_size", Integer.parseInt(txtMaxStack.getText().trim())); } catch (Exception ignored) {}
+        root.addProperty("creative_tab", txtCreativeTab.getText().trim());
+
+        try { root.addProperty("heal_amount", Integer.parseInt(txtFoodHeal.getText().trim())); } catch (Exception ignored) {}
+        try { root.addProperty("saturation", Float.parseFloat(txtFoodSat.getText().trim())); } catch (Exception ignored) {}
+        root.addProperty("is_meat", Boolean.parseBoolean(txtFoodMeat.getText().trim()));
+        root.addProperty("always_edible", Boolean.parseBoolean(txtFoodAlways.getText().trim()));
+
+        String effect = txtFoodEffect.getText().trim();
+        if (!effect.isEmpty()) {
+            root.addProperty("potion_effect", effect);
+            try { root.addProperty("potion_duration", Integer.parseInt(txtFoodDur.getText().trim())); } catch (Exception ignored) {}
+            try { root.addProperty("potion_amplifier", Integer.parseInt(txtFoodAmp.getText().trim())); } catch (Exception ignored) {}
+            try { root.addProperty("potion_probability", Float.parseFloat(txtFoodProb.getText().trim())); } catch (Exception ignored) {}
+        }
+
+        saveJsonFile(root, "food", fileName);
     }
 
     public void receivePackList(String json) {
