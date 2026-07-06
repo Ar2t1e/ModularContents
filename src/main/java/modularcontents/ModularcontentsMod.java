@@ -61,7 +61,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraftforge.client.model.ModelLoader;
 
-import modularcontents.custom.item.CustomItemManager;
+import modularcontents.custom.item.CustomContentManager;
+import modularcontents.custom.item.CustomBlockInfo;
+import modularcontents.custom.item.CustomFoodInfo;
+import modularcontents.custom.item.ItemCustomFood;
+import modularcontents.custom.block.BlockCustom;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.block.Block;
 import modularcontents.custom.item.CustomItemInfo;
 import modularcontents.custom.item.ItemCustom;
 import modularcontents.custom.client.ModularResourcePack;
@@ -166,9 +172,9 @@ public class ModularcontentsMod implements IGuiHandler {
         // Setup directories for custom recipes
         ListWorkbenchRecipeManager.setupDirectories(event.getModConfigurationDirectory().getParentFile());
 
-        // Load custom tabs and items JSON definitions BEFORE item registration
+        // Load custom tabs and content JSON definitions BEFORE item registration
         CustomTabManager.loadTabs(event.getModConfigurationDirectory().getParentFile());
-        CustomItemManager.loadItems(event.getModConfigurationDirectory().getParentFile());
+        CustomContentManager.loadContent(event.getModConfigurationDirectory().getParentFile());
 
         proxy.preInit(event);
 
@@ -237,9 +243,25 @@ public class ModularcontentsMod implements IGuiHandler {
         event.getRegistry().register(airdrop);
         event.getRegistry().register(laptop);
         GameRegistry.registerTileEntity(TileEntityListWorkbench.class, "modularcontents:tile_list_workbench");
-
-        event.getRegistry().register(airdrop);
         GameRegistry.registerTileEntity(TileEntityAirdrop.class, "modularcontents:tile_airdrop");
+
+        // Register JSON Blocks
+        for (CustomBlockInfo info : CustomContentManager.CUSTOM_BLOCKS.values()) {
+            BlockCustom block = new BlockCustom(info);
+            if (info.creativeTab != null && !info.creativeTab.isEmpty()) {
+                if (CustomTabManager.CUSTOM_TABS.containsKey(info.creativeTab)) {
+                    block.setCreativeTab(CustomTabManager.CUSTOM_TABS.get(info.creativeTab));
+                } else {
+                    for (net.minecraft.creativetab.CreativeTabs tab : net.minecraft.creativetab.CreativeTabs.CREATIVE_TAB_ARRAY) {
+                        if (tab.getTabLabel().equalsIgnoreCase(info.creativeTab)) {
+                            block.setCreativeTab(tab);
+                            break;
+                        }
+                    }
+                }
+            }
+            event.getRegistry().register(block);
+        }
     }
 
     @SubscribeEvent
@@ -255,9 +277,39 @@ public class ModularcontentsMod implements IGuiHandler {
         event.getRegistry().register(signal_flare);
         event.getRegistry().register(radio);
 
-        for (CustomItemInfo info : CustomItemManager.CUSTOM_ITEMS.values()) {
-            Item item = new ItemCustom(info);
+        // Register Basic Items
+        for (modularcontents.custom.item.CustomItemInfo info : CustomContentManager.CUSTOM_ITEMS.values()) {
+            Item item = new modularcontents.custom.item.ItemCustom(info);
             event.getRegistry().register(item);
+        }
+
+        // Register Food
+        for (CustomFoodInfo info : CustomContentManager.CUSTOM_FOODS.values()) {
+            Item item = new ItemCustomFood(info);
+            // Setup creative tab logic similar to items
+            if (info.creativeTab != null && !info.creativeTab.isEmpty()) {
+                if (CustomTabManager.CUSTOM_TABS.containsKey(info.creativeTab)) {
+                    item.setCreativeTab(CustomTabManager.CUSTOM_TABS.get(info.creativeTab));
+                } else {
+                    for (net.minecraft.creativetab.CreativeTabs tab : net.minecraft.creativetab.CreativeTabs.CREATIVE_TAB_ARRAY) {
+                        if (tab.getTabLabel().equalsIgnoreCase(info.creativeTab)) {
+                            item.setCreativeTab(tab);
+                            break;
+                        }
+                    }
+                }
+            }
+            event.getRegistry().register(item);
+        }
+
+        // Register ItemBlocks for the Blocks we added
+        for (CustomBlockInfo info : CustomContentManager.CUSTOM_BLOCKS.values()) {
+            Block block = ForgeRegistries.BLOCKS.getValue(new net.minecraft.util.ResourceLocation("modularcontents", info.id));
+            if (block != null) {
+                ItemBlock itemBlock = new ItemBlock(block);
+                itemBlock.setRegistryName(block.getRegistryName());
+                event.getRegistry().register(itemBlock);
+            }
         }
     }
 
@@ -299,6 +351,7 @@ public class ModularcontentsMod implements IGuiHandler {
 
     @SubscribeEvent
     @SideOnly(Side.CLIENT)
+    @SubscribeEvent
     public static void registerModels(ModelRegistryEvent event) {
         ModelLoader.setCustomModelResourceLocation(custom_workbench_item, 0, new ModelResourceLocation(custom_workbench_item.getRegistryName(), "inventory"));
         ModelLoader.setCustomModelResourceLocation(airdrop_item, 0, new ModelResourceLocation(airdrop_item.getRegistryName(), "inventory"));
@@ -306,13 +359,17 @@ public class ModularcontentsMod implements IGuiHandler {
         ModelLoader.setCustomModelResourceLocation(signal_flare, 0, new ModelResourceLocation(signal_flare.getRegistryName(), "inventory"));
         ModelLoader.setCustomModelResourceLocation(radio, 0, new ModelResourceLocation(radio.getRegistryName(), "inventory"));
 
-        for (CustomItemInfo info : CustomItemManager.CUSTOM_ITEMS.values()) {
+        for (modularcontents.custom.item.CustomItemInfo info : CustomContentManager.CUSTOM_ITEMS.values()) {
             Item item = Item.getByNameOrId("modularcontents:" + info.id);
-            if (item != null) {
-                ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(item.getRegistryName(), "inventory"));
-            } else {
-                System.out.println("[ModularContents] WARNING: Item.getByNameOrId returned null for " + info.id);
-            }
+            if (item != null) ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(item.getRegistryName(), "inventory"));
+        }
+        for (CustomFoodInfo info : CustomContentManager.CUSTOM_FOODS.values()) {
+            Item item = Item.getByNameOrId("modularcontents:" + info.id);
+            if (item != null) ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(item.getRegistryName(), "inventory"));
+        }
+        for (CustomBlockInfo info : CustomContentManager.CUSTOM_BLOCKS.values()) {
+            Item item = Item.getByNameOrId("modularcontents:" + info.id);
+            if (item != null) ModelLoader.setCustomModelResourceLocation(item, 0, new ModelResourceLocation(item.getRegistryName(), "inventory"));
         }
     }
 
