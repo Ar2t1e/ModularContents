@@ -62,7 +62,7 @@ public class ModularResourcePack implements IResourcePack {
         // Model intercept check
         if (path.startsWith("models/item/") && path.endsWith(".json")) {
             String itemId = path.substring("models/item/".length(), path.length() - 5);
-            if (CustomItemManager.CUSTOM_ITEMS.containsKey(itemId) || itemId.equals("custom_workbench")) {
+            if (CustomContentManager.CUSTOM_ITEMS.containsKey(itemId) || CustomContentManager.CUSTOM_FOODS.containsKey(itemId) || CustomContentManager.CUSTOM_BLOCKS.containsKey(itemId) || itemId.equals("custom_workbench")) {
                 if (!itemId.equals("custom_workbench")) {
                     return true;
                 }
