@@ -41,16 +41,19 @@ public class GuiContentCreator extends GuiContainer {
     private static final int TAB_RECIPES = 2;
     private static final int TAB_TABS = 4;
     private static final int TAB_ZONE = 6;
+    private static final int TAB_NPC = 8;
 
     private GuiButton btnTabLoot;
     private GuiButton btnTabItems;
     private GuiButton btnTabRecipes;
     private GuiButton btnTabTabs;
     private GuiButton btnTabZone;
+    private GuiButton btnTabNpcs;
     private GuiButton btnGenerate;
     private GuiButton btnNbtToggle;
     private GuiButton btnOpenMap;
 
+    private GuiTextField txtPackName;
     private GuiTextField txtFileName;
 
     private GuiTextField txtWeight;
@@ -71,6 +74,15 @@ public class GuiContentCreator extends GuiContainer {
 
     private GuiTextField txtTabName;
     private GuiTextField txtTabIcon;
+
+    private GuiTextField txtNpcId;
+    private GuiTextField txtNpcName;
+    private GuiTextField txtNpcHealth;
+    private GuiTextField txtNpcSpeed;
+    private GuiTextField txtNpcDamage;
+    private GuiTextField txtNpcFollow;
+    private GuiTextField txtNpcShoot;
+    private GuiTextField txtNpcTexture;
 
     private final ContainerContentCreator container;
     private int selectedSlot = -1;
@@ -114,6 +126,7 @@ public class GuiContentCreator extends GuiContainer {
         this.btnTabRecipes = new GuiLaptop.FlatButton(2, guiLeft + 112, guiTop + 6, 50, 14, tr("tab.recipes"));
         this.btnTabTabs = new GuiLaptop.FlatButton(4, guiLeft + 164, guiTop + 6, 50, 14, tr("tab.tabs"));
         this.btnTabZone = new GuiLaptop.FlatButton(6, guiLeft + 216, guiTop + 6, 50, 14, tr("tab.zone"));
+        this.btnTabNpcs = new GuiLaptop.FlatButton(8, guiLeft + 268, guiTop + 6, 50, 14, "NPCs");
         this.btnGenerate = new GuiLaptop.FlatButton(3, guiLeft + 198, guiTop + 138, 130, 14, tr("generate"));
         this.btnNbtToggle = new GuiLaptop.FlatButton(5, guiLeft + 70, guiTop + 134, 60, 14, tr("nbt.off"));
         this.btnOpenMap = new GuiLaptop.FlatButton(7, guiLeft + 40, guiTop + 80, 110, 18, tr("open_map"));
@@ -123,10 +136,12 @@ public class GuiContentCreator extends GuiContainer {
         this.buttonList.add(btnTabRecipes);
         this.buttonList.add(btnTabTabs);
         this.buttonList.add(btnTabZone);
+        this.buttonList.add(btnTabNpcs);
         this.buttonList.add(btnGenerate);
         this.buttonList.add(btnNbtToggle);
         this.buttonList.add(btnOpenMap);
 
+        this.txtPackName = createField(9, 14, 15, 100, 32, "example_pack");
         this.txtFileName = createField(10, 198, 37, 130, 32, "my_file");
 
         this.txtWeight = createField(11, 198, 65, 50, 4, "50");
@@ -148,6 +163,15 @@ public class GuiContentCreator extends GuiContainer {
 
         this.txtTabName = createField(22, 198, 65, 130, 32, "My Custom Tab");
         this.txtTabIcon = createField(23, 198, 93, 130, 64, "minecraft:diamond_sword");
+
+        this.txtNpcId = createField(26, 15, 45, 160, 32, "custom_bandit");
+        this.txtNpcName = createField(27, 15, 73, 160, 32, "Bandit");
+        this.txtNpcHealth = createField(28, 15, 101, 40, 5, "20.0");
+        this.txtNpcSpeed = createField(29, 65, 101, 40, 5, "0.25");
+        this.txtNpcDamage = createField(30, 115, 101, 40, 5, "2.0");
+        this.txtNpcFollow = createField(31, 15, 129, 40, 5, "32.0");
+        this.txtNpcShoot = createField(32, 65, 129, 40, 5, "16.0");
+        this.txtNpcTexture = createField(33, 115, 129, 60, 64, "minecraft:textures/entity/steve.png");
 
         updateTabState();
     }
@@ -178,10 +202,10 @@ public class GuiContentCreator extends GuiContainer {
     }
 
     private GuiTextField[] allFields() {
-        return new GuiTextField[]{txtFileName, txtWeight, txtItemMin, txtItemMax, txtItemChance,
+        return new GuiTextField[]{txtPackName, txtFileName, txtWeight, txtItemMin, txtItemMax, txtItemChance,
                 txtItemName, txtMaxStack, txtCreativeTab, txtMaxDamage,
                 txtRecipeCat, txtCraftTime, txtMinDrops, txtRecipeChance, txtRecipeNbt,
-                txtTabName, txtTabIcon};
+                txtTabName, txtTabIcon, txtNpcId, txtNpcName, txtNpcHealth, txtNpcSpeed, txtNpcDamage, txtNpcFollow, txtNpcShoot, txtNpcTexture};
     }
 
     private void updateTabState() {
@@ -191,17 +215,20 @@ public class GuiContentCreator extends GuiContainer {
         btnTabRecipes.enabled = tab != TAB_RECIPES;
         btnTabTabs.enabled = tab != TAB_TABS;
         btnTabZone.enabled = tab != TAB_ZONE;
+        btnTabNpcs.enabled = tab != TAB_NPC;
 
         boolean isLoot = tab == TAB_LOOT;
         boolean isItem = tab == TAB_ITEMS;
         boolean isRecp = tab == TAB_RECIPES;
         boolean isTabs = tab == TAB_TABS;
         boolean isZone = tab == TAB_ZONE;
+        boolean isNpc = tab == TAB_NPC;
 
         btnGenerate.visible = !isZone;
         btnOpenMap.visible = isZone;
 
-        txtFileName.setVisible(!isZone);
+        txtPackName.setVisible(!isZone);
+        txtFileName.setVisible(!isZone && !isNpc); // NPC uses its own ID field
         txtWeight.setVisible(isLoot);
         txtItemName.setVisible(isItem);
         txtMaxStack.setVisible(isItem);
@@ -213,12 +240,24 @@ public class GuiContentCreator extends GuiContainer {
         txtTabName.setVisible(isTabs);
         txtTabIcon.setVisible(isTabs);
 
+        txtNpcId.setVisible(isNpc);
+        txtNpcName.setVisible(isNpc);
+        txtNpcHealth.setVisible(isNpc);
+        txtNpcSpeed.setVisible(isNpc);
+        txtNpcDamage.setVisible(isNpc);
+        txtNpcFollow.setVisible(isNpc);
+        txtNpcShoot.setVisible(isNpc);
+        txtNpcTexture.setVisible(isNpc);
+
         for (int i = 0; i < 27; i++) {
             Slot slot = container.inventorySlots.get(i);
             if (isLoot) {
                 slot.yPos = 43 + (i / 9) * 18;
             } else if (isRecp) {
                 slot.yPos = i < 9 ? 41 : 73 + (i / 9 - 1) * 18;
+            } else if (isNpc && i < 6) { // 6 equipment slots for NPC
+                slot.yPos = 160;
+                slot.xPos = 14 + (i * 18);
             } else {
                 slot.yPos = -9999;
             }
@@ -328,6 +367,8 @@ public class GuiContentCreator extends GuiContainer {
             drawTabsTab();
         } else if (tab == TAB_ZONE) {
             drawZoneTab();
+        } else if (tab == TAB_NPC) {
+            drawNpcTab();
         }
 
         for (GuiTextField field : allFields()) {
@@ -419,6 +460,25 @@ public class GuiContentCreator extends GuiContainer {
         fontRenderer.drawString(tr("header.zone"), guiLeft + 14, guiTop + 31, COL_ACCENT);
         drawLeftInfo(infoLines("info.zone", 3));
         drawRightInfo(infoLines("info.zone.right", 8), 30);
+    }
+
+    private void drawNpcTab() {
+        fontRenderer.drawString("NPC Editor", guiLeft + 14, guiTop + 31, COL_ACCENT);
+
+        fontRenderer.drawString("ID:", guiLeft + 15, guiTop + 45 - 9, COL_TEXT_DIM);
+        fontRenderer.drawString("Name:", guiLeft + 15, guiTop + 73 - 9, COL_TEXT_DIM);
+        fontRenderer.drawString("Health", guiLeft + 15, guiTop + 101 - 9, COL_TEXT_DIM);
+        fontRenderer.drawString("Speed", guiLeft + 65, guiTop + 101 - 9, COL_TEXT_DIM);
+        fontRenderer.drawString("Damage", guiLeft + 115, guiTop + 101 - 9, COL_TEXT_DIM);
+        fontRenderer.drawString("Follow Range", guiLeft + 15, guiTop + 129 - 9, COL_TEXT_DIM);
+        fontRenderer.drawString("Shoot Range", guiLeft + 65, guiTop + 129 - 9, COL_TEXT_DIM);
+        fontRenderer.drawString("Texture Path", guiLeft + 115, guiTop + 129 - 9, COL_TEXT_DIM);
+
+        fontRenderer.drawString("Equipment Slots (Main, Off, Head, Chest, Legs, Feet)", guiLeft + 14, guiTop + 148, COL_TEXT_DIM);
+
+        for (int i = 0; i < 6; ++i) {
+            drawSlotBox(guiLeft + 14 + (i * 18), guiTop + 159, COL_SLOT_BG, false);
+        }
     }
 
     private String[] infoLines(String key, int count) {
@@ -530,7 +590,7 @@ public class GuiContentCreator extends GuiContainer {
 
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
-        if (button.id == 0 || button.id == 1 || button.id == 2 || button.id == 4 || button.id == 6) {
+        if (button.id == 0 || button.id == 1 || button.id == 2 || button.id == 4 || button.id == 6 || button.id == 8) {
             container.activeTab = button.id;
             updateTabState();
         } else if (button.id == 3) {
@@ -538,6 +598,7 @@ public class GuiContentCreator extends GuiContainer {
             else if (container.activeTab == TAB_ITEMS) generateItem();
             else if (container.activeTab == TAB_RECIPES) generateRecipe();
             else if (container.activeTab == TAB_TABS) generateTab();
+            else if (container.activeTab == TAB_NPC) generateNpc();
         } else if (button.id == 7) {
             this.mc.displayGuiScreen(new GuiZoneEquipment());
         } else if (button.id == 5 && selectedSlot != -1) {
@@ -684,20 +745,50 @@ public class GuiContentCreator extends GuiContainer {
         saveJsonFile(root, "tabs", fileName);
     }
 
+    private void generateNpc() {
+        String id = txtNpcId.getText().trim();
+        if (id.isEmpty()) id = "custom_npc";
+        String fileName = id;
+        if (!fileName.endsWith(".json")) fileName += ".json";
+        else id = id.substring(0, id.length() - 5);
+
+        JsonObject root = new JsonObject();
+        root.addProperty("id", id);
+        root.addProperty("name", txtNpcName.getText().trim());
+        try { root.addProperty("maxHealth", Double.parseDouble(txtNpcHealth.getText().trim())); } catch (Exception e) {}
+        try { root.addProperty("speed", Double.parseDouble(txtNpcSpeed.getText().trim())); } catch (Exception e) {}
+        try { root.addProperty("attackDamage", Double.parseDouble(txtNpcDamage.getText().trim())); } catch (Exception e) {}
+        try { root.addProperty("followRange", Double.parseDouble(txtNpcFollow.getText().trim())); } catch (Exception e) {}
+        try { root.addProperty("shootRange", Double.parseDouble(txtNpcShoot.getText().trim())); } catch (Exception e) {}
+        root.addProperty("texture", txtNpcTexture.getText().trim());
+
+        JsonObject equipment = new JsonObject();
+        String[] slots = {"mainhand", "offhand", "head", "chest", "legs", "feet"};
+        for (int i = 0; i < 6; i++) {
+            Slot slot = container.inventorySlots.get(i);
+            if (slot != null && slot.getHasStack()) {
+                equipment.addProperty(slots[i], slot.getStack().getItem().getRegistryName().toString());
+            }
+        }
+        root.add("equipment", equipment);
+
+        saveJsonFile(root, "npcs", fileName);
+    }
+
+    public void receivePackList(String json) {
+        // We will parse this and display it later. For now, it satisfies the server.
+    }
+
+    public void receiveFileContent(String packName, String filePath, String json) {
+        // Will parse and load JSON here.
+    }
+
     private void saveJsonFile(JsonObject root, String subDir, String fileName) {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         String json = gson.toJson(root);
+        String packName = txtPackName.getText().trim();
+        if (packName.isEmpty()) packName = "example_pack";
 
-        File gameDir = mc.mcDataDir;
-        File genDir = new File(gameDir, "ModularContents/generated/" + subDir);
-        genDir.mkdirs();
-        File outFile = new File(genDir, fileName);
-
-        try (FileWriter writer = new FileWriter(outFile)) {
-            writer.write(json);
-            mc.player.sendMessage(new TextComponentString(TextFormatting.GREEN + tr("msg.generated", outFile.getAbsolutePath())));
-        } catch (IOException e) {
-            mc.player.sendMessage(new TextComponentString(TextFormatting.RED + tr("msg.failed", e.getMessage())));
-        }
+        modularcontents.ModularcontentsMod.PACKET_HANDLER.sendToServer(new modularcontents.custom.network.PacketSaveContent(packName, subDir + "/" + fileName, json));
     }
 }

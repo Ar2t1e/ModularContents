@@ -98,6 +98,16 @@ import modularcontents.custom.network.PacketSyncZones;
 import modularcontents.custom.network.PacketSyncZonesHandler;
 import modularcontents.custom.network.PacketRequestZones;
 import modularcontents.custom.network.PacketRequestZonesHandler;
+import modularcontents.custom.network.PacketRequestPackList;
+import modularcontents.custom.network.PacketRequestPackListHandler;
+import modularcontents.custom.network.PacketSendPackList;
+import modularcontents.custom.network.PacketSendPackListHandler;
+import modularcontents.custom.network.PacketRequestFileContent;
+import modularcontents.custom.network.PacketRequestFileContentHandler;
+import modularcontents.custom.network.PacketSendFileContent;
+import modularcontents.custom.network.PacketSendFileContentHandler;
+import modularcontents.custom.network.PacketSaveContent;
+import modularcontents.custom.network.PacketSaveContentHandler;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import java.util.ArrayList;
@@ -175,6 +185,11 @@ public class ModularcontentsMod implements IGuiHandler {
         PACKET_HANDLER.registerMessage(PacketZoneLootHandler.class, PacketZoneLoot.class, packetId++, Side.SERVER);
         PACKET_HANDLER.registerMessage(PacketSyncZonesHandler.class, PacketSyncZones.class, packetId++, Side.CLIENT);
         PACKET_HANDLER.registerMessage(PacketRequestZonesHandler.class, PacketRequestZones.class, packetId++, Side.SERVER);
+        PACKET_HANDLER.registerMessage(PacketRequestPackListHandler.class, PacketRequestPackList.class, packetId++, Side.SERVER);
+        PACKET_HANDLER.registerMessage(PacketSendPackListHandler.class, PacketSendPackList.class, packetId++, Side.CLIENT);
+        PACKET_HANDLER.registerMessage(PacketRequestFileContentHandler.class, PacketRequestFileContent.class, packetId++, Side.SERVER);
+        PACKET_HANDLER.registerMessage(PacketSendFileContentHandler.class, PacketSendFileContent.class, packetId++, Side.CLIENT);
+        PACKET_HANDLER.registerMessage(PacketSaveContentHandler.class, PacketSaveContent.class, packetId++, Side.SERVER);
     }
 
     public static PacketSyncContent buildContentSyncPacket() {
