@@ -45,4 +45,6 @@ public class CustomItemInfo {
         @SerializedName("consume_on_use")
         public boolean consumeOnUse = true;
     }
+    @SerializedName("burn_time")
+    public int burnTime = 0;
 }

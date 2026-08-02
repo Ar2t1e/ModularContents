@@ -130,7 +130,7 @@ import java.util.ArrayList;
 @Mod.EventBusSubscriber
 public class ModularcontentsMod implements IGuiHandler {
     public static final String MODID = "modularcontents";
-    public static final String VERSION = "0.3";
+    public static final String VERSION = "0.6";
 
     @Mod.Instance(MODID)
     public static ModularcontentsMod instance;
@@ -235,6 +235,7 @@ public class ModularcontentsMod implements IGuiHandler {
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
         proxy.init(event);
+        GameRegistry.registerFuelHandler(new modularcontents.custom.item.CustomFuelHandler());
     }
 
     @Mod.EventHandler
@@ -243,6 +244,7 @@ public class ModularcontentsMod implements IGuiHandler {
         ListWorkbenchRecipeManager.loadRecipes(event.getServer().getDataDirectory());
         AirdropLootManager.loadLootTables(event.getServer().getDataDirectory());
         EquipmentManager.loadEquipment(event.getServer().getDataDirectory());
+        modularcontents.custom.recipe.CustomSmeltingManager.loadSmeltingRecipes(event.getServer().getDataDirectory());
 
         // Register in-game commands
         event.registerServerCommand(new CommandModularContents());
@@ -280,6 +282,14 @@ public class ModularcontentsMod implements IGuiHandler {
                 block = new modularcontents.custom.block.BlockCustomFence(info);
             } else if ("wall".equalsIgnoreCase(info.blockType)) {
                 block = new modularcontents.custom.block.BlockCustomWall(info);
+            } else if ("trapdoor".equalsIgnoreCase(info.blockType)) {
+                block = new modularcontents.custom.block.BlockCustomTrapDoor(info);
+            } else if ("button".equalsIgnoreCase(info.blockType)) {
+                block = new modularcontents.custom.block.BlockCustomButton(info);
+            } else if ("pressure_plate".equalsIgnoreCase(info.blockType)) {
+                block = new modularcontents.custom.block.BlockCustomPressurePlate(info);
+            } else if ("door".equalsIgnoreCase(info.blockType)) {
+                block = new modularcontents.custom.block.BlockCustomDoor(info);
             } else {
                 if ("horizontal".equalsIgnoreCase(info.rotationType)) {
                     block = new modularcontents.custom.block.BlockCustomHorizontal(info);
@@ -385,6 +395,9 @@ public class ModularcontentsMod implements IGuiHandler {
                     } else {
                         itemBlock = new net.minecraft.item.ItemBlock(block);
                     }
+                } else if (block instanceof modularcontents.custom.block.BlockCustomDoor) {
+                    itemBlock = new net.minecraft.item.ItemDoor(block);
+                    ((modularcontents.custom.block.BlockCustomDoor) block).setDropItem(itemBlock);
                 } else {
                     itemBlock = new net.minecraft.item.ItemBlock(block);
                 }

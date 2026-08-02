@@ -59,6 +59,19 @@ public class CustomBlockInfo {
     @SerializedName("has_wall")
     public boolean hasWall = false;
 
+    @SerializedName("has_trapdoor")
+    public boolean hasTrapdoor = false;
+
+    @SerializedName("has_door")
+    public boolean hasDoor = false;
+
+    @SerializedName("has_button")
+    public boolean hasButton = false;
+
+    @SerializedName("has_pressure_plate")
+    public boolean hasPressurePlate = false;
+
+
     @SerializedName("rotation_type")
     public String rotationType = "none"; // none, horizontal, log
 
@@ -67,4 +80,6 @@ public class CustomBlockInfo {
 
     @SerializedName("bounding_boxes")
     public double[][] boundingBoxes = null;
+    @SerializedName("burn_time")
+    public int burnTime = 0;
 }
