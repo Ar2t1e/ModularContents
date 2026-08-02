@@ -61,4 +61,10 @@ public class CustomBlockInfo {
 
     @SerializedName("rotation_type")
     public String rotationType = "none"; // none, horizontal, log
+
+    @SerializedName("biome_tint")
+    public String biomeTint = ""; // grass, foliage, water
+
+    @SerializedName("bounding_boxes")
+    public double[][] boundingBoxes = null;
 }

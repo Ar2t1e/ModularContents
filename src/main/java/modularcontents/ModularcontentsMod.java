@@ -234,7 +234,7 @@ public class ModularcontentsMod implements IGuiHandler {
 
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) {
-        // Init logic if needed
+        proxy.init(event);
     }
 
     @Mod.EventHandler
@@ -285,6 +285,8 @@ public class ModularcontentsMod implements IGuiHandler {
                     block = new modularcontents.custom.block.BlockCustomHorizontal(info);
                 } else if ("log".equalsIgnoreCase(info.rotationType)) {
                     block = new modularcontents.custom.block.BlockCustomLog(info);
+                } else if ("prop".equalsIgnoreCase(info.rotationType)) {
+                    block = new modularcontents.custom.block.BlockCustomProp(info);
                 } else {
                     block = new BlockCustom(info);
                 }

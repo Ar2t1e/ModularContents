@@ -616,6 +616,7 @@ public class GuiHandcraft extends GuiContainer {
                 GlStateManager.scale(0.75f, 0.75f, 1.0f);
                 RenderHelper.enableGUIStandardItemLighting();
                 this.itemRender.renderItemAndEffectIntoGUI(result, (int) ((guiLeft + 10) / 0.75f), (int) ((rowY + 3) / 0.75f));
+                this.itemRender.renderItemOverlayIntoGUI(this.fontRenderer, result, (int) ((guiLeft + 10) / 0.75f), (int) ((rowY + 3) / 0.75f), null);
                 RenderHelper.disableStandardItemLighting();
                 GlStateManager.popMatrix();
 
@@ -662,6 +663,7 @@ public class GuiHandcraft extends GuiContainer {
 
             RenderHelper.enableGUIStandardItemLighting();
             this.itemRender.renderItemAndEffectIntoGUI(result, cx + 2, cy + 2);
+            this.itemRender.renderItemOverlayIntoGUI(this.fontRenderer, result, cx + 2, cy + 2, null);
             RenderHelper.disableStandardItemLighting();
 
             if (group.recipes.size() > 1) {
@@ -808,6 +810,7 @@ public class GuiHandcraft extends GuiContainer {
                 GlStateManager.scale(2.0f, 2.0f, 1.0f);
                 RenderHelper.enableGUIStandardItemLighting();
                 this.itemRender.renderItemAndEffectIntoGUI(primaryResult, (int) (rightX / 2.0f), (int) ((guiTop + 8) / 2.0f));
+                this.itemRender.renderItemOverlayIntoGUI(this.fontRenderer, primaryResult, (int) (rightX / 2.0f), (int) ((guiTop + 8) / 2.0f), null);
                 RenderHelper.disableStandardItemLighting();
                 GlStateManager.popMatrix();
 
@@ -845,6 +848,7 @@ public class GuiHandcraft extends GuiContainer {
                     GlStateManager.scale(0.75f, 0.75f, 1.0f);
                     RenderHelper.enableGUIStandardItemLighting();
                     this.itemRender.renderItemAndEffectIntoGUI(res, (int) (yieldX / 0.75f), (int) ((guiTop + 31) / 0.75f));
+                    this.itemRender.renderItemOverlayIntoGUI(this.fontRenderer, res, (int) (yieldX / 0.75f), (int) ((guiTop + 31) / 0.75f), null);
                     RenderHelper.disableStandardItemLighting();
                     GlStateManager.popMatrix();
 

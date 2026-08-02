@@ -127,6 +127,13 @@ public class CustomContentManager {
         clone.harvestLevel = original.harvestLevel;
         clone.texture = (original.texture != null && !original.texture.isEmpty()) ? original.texture : original.id;
         clone.blockType = newType;
+        clone.biomeTint = original.biomeTint;
+        clone.rotationType = original.rotationType;
+        clone.textureTop = original.textureTop;
+        clone.textureBottom = original.textureBottom;
+        clone.textureFront = original.textureFront;
+        clone.textureSide = original.textureSide;
+        clone.boundingBoxes = original.boundingBoxes;
         return clone;
     }
 }
