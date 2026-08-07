@@ -1,5 +1,6 @@
 package modularcontents.custom.network;
 
+import modularcontents.custom.item.CustomFuelManager;
 import modularcontents.custom.npc.NPCManager;
 import modularcontents.custom.recipe.ListWorkbenchRecipeManager;
 import modularcontents.custom.loot.EquipmentManager;
@@ -50,6 +51,7 @@ public class PacketSaveContentHandler implements IMessageHandler<PacketSaveConte
                 ListWorkbenchRecipeManager.loadRecipes(player.getServer().getDataDirectory());
                 EquipmentManager.loadEquipment(player.getServer().getDataDirectory());
                 NPCManager.loadNPCs(player.getServer().getDataDirectory());
+                CustomFuelManager.loadFuels(player.getServer().getDataDirectory());
 
                 // Sync to all clients
                 PacketSyncContent syncPacket = ModularcontentsMod.buildContentSyncPacket();

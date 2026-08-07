@@ -1,5 +1,6 @@
 package modularcontents.custom.pack;
 
+import modularcontents.custom.pack.PackState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.block.Block;
@@ -35,7 +36,7 @@ public class CustomWorkbenchManager {
         File rootPacksDir = new File(gameDir, "ModularContents");
         if (!rootPacksDir.exists()) return;
 
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 File workbenchDir = new File(packDir, "workbenches");

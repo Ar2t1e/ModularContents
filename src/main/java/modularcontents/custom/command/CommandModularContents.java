@@ -7,6 +7,7 @@ import modularcontents.custom.recipe.ListWorkbenchRecipeManager;
 import modularcontents.custom.loot.AirdropLootManager;
 import modularcontents.custom.loot.EquipmentManager;
 import modularcontents.custom.npc.EntityCustomNPC;
+import modularcontents.custom.item.CustomFuelManager;
 import modularcontents.custom.npc.NPCManager;
 import net.minecraft.command.CommandBase;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -60,6 +61,7 @@ public class CommandModularContents extends CommandBase {
             EquipmentManager.loadEquipment(server.getDataDirectory());
             // Reload NPCs
             NPCManager.loadNPCs(server.getDataDirectory());
+            CustomFuelManager.loadFuels(server.getDataDirectory());
 
             PacketSyncContent syncPacket = ModularcontentsMod.buildContentSyncPacket();
             for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {

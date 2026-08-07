@@ -3,10 +3,12 @@ package modularcontents.custom.network;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import modularcontents.custom.pack.PackState;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+
 import java.io.File;
 
 public class PacketRequestPackListHandler implements IMessageHandler<PacketRequestPackList, IMessage> {
@@ -15,28 +17,34 @@ public class PacketRequestPackListHandler implements IMessageHandler<PacketReque
         EntityPlayerMP player = ctx.getServerHandler().player;
         player.getServerWorld().addScheduledTask(() -> {
             if (player.canUseCommandBlock()) { // OP Check
-                File rootDir = new File(player.getServer().getDataDirectory(), "ModularContents");
-                JsonObject packsObj = new JsonObject();
-
-                if (rootDir.exists() && rootDir.isDirectory()) {
-                    File[] packs = rootDir.listFiles(File::isDirectory);
-                    if (packs != null) {
-                        for (File pack : packs) {
-                            if (pack.getName().equals("generated")) continue; // Skip old generated folder
-                            JsonArray filesArray = new JsonArray();
-                            scanDirectory(pack, pack, filesArray);
-                            packsObj.add(pack.getName(), filesArray);
-                        }
-                    }
-                }
-
-                modularcontents.ModularcontentsMod.PACKET_HANDLER.sendTo(new PacketSendPackList(new Gson().toJson(packsObj)), player);
+                modularcontents.ModularcontentsMod.PACKET_HANDLER.sendTo(
+                        new PacketSendPackList(buildPackListJson(player.getServer().getDataDirectory())), player);
             }
         });
         return null;
     }
 
-    private void scanDirectory(File root, File current, JsonArray array) {
+    public static String buildPackListJson(File dataDir) {
+        File rootDir = new File(dataDir, "ModularContents");
+        JsonObject packsObj = new JsonObject();
+        JsonArray disabled = new JsonArray();
+
+        for (File pack : PackState.listAllPacks(rootDir)) {
+            JsonArray filesArray = new JsonArray();
+            scanDirectory(pack, pack, filesArray);
+            packsObj.add(pack.getName(), filesArray);
+            if (!PackState.isEnabled(pack.getName())) {
+                disabled.add(pack.getName());
+            }
+        }
+
+        JsonObject root = new JsonObject();
+        root.add("packs", packsObj);
+        root.add("disabled", disabled);
+        return new Gson().toJson(root);
+    }
+
+    private static void scanDirectory(File root, File current, JsonArray array) {
         File[] files = current.listFiles();
         if (files != null) {
             for (File file : files) {

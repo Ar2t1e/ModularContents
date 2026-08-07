@@ -1,5 +1,6 @@
 package modularcontents.custom.npc;
 
+import modularcontents.custom.pack.PackState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.item.Item;
@@ -23,7 +24,7 @@ public class NPCManager {
             return;
         }
 
-        File[] packs = rootDir.listFiles(File::isDirectory);
+        File[] packs = PackState.listPacks(rootDir);
         if (packs == null) return;
 
         for (File packDir : packs) {

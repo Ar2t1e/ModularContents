@@ -10,6 +10,10 @@ public class CustomFuelHandler implements IFuelHandler {
     @Override
     public int getBurnTime(ItemStack fuel) {
         if (fuel.isEmpty()) return 0;
+
+        int declared = CustomFuelManager.getBurnTime(fuel);
+        if (declared > 0) return declared;
+
         Item item = fuel.getItem();
         ResourceLocation reg = item.getRegistryName();
         if (reg != null && reg.getResourceDomain().equals("modularcontents")) {
@@ -20,9 +24,14 @@ public class CustomFuelHandler implements IFuelHandler {
                 return CustomContentManager.CUSTOM_ITEMS.get(path).burnTime;
             }
             
-            // Block 
+            // Block
             if (CustomContentManager.CUSTOM_BLOCKS.containsKey(path)) {
                 return CustomContentManager.CUSTOM_BLOCKS.get(path).burnTime;
+            }
+
+            // Food
+            if (CustomContentManager.CUSTOM_FOODS.containsKey(path)) {
+                return CustomContentManager.CUSTOM_FOODS.get(path).burnTime;
             }
             
             // Try base block without suffix

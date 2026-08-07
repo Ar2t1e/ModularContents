@@ -1,5 +1,6 @@
 package modularcontents.custom.recipe;
 
+import modularcontents.custom.pack.PackState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import modularcontents.custom.config.ModularContentsConfig;
@@ -38,7 +39,7 @@ public class ListWorkbenchRecipeManager {
     private static final String[] CONTENT_FOLDERS = {"recipes", "loot_tables/airdrops", "loot_tables/equipment", "items", "tabs"};
 
     private static boolean hasAnyPack(File rootPacksDir) {
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 for (String folder : CONTENT_FOLDERS) {
@@ -69,7 +70,7 @@ public class ListWorkbenchRecipeManager {
             rootPacksDir.mkdirs();
         }
 
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 File recipeDir = new File(packDir, "recipes");
@@ -191,7 +192,12 @@ public class ListWorkbenchRecipeManager {
     private static final String[] EXAMPLE_PACK_ITEMS = {
             "duct_tape.json",
             "screwdriver.json",
-            "signal_flare.json"
+            "signal_flare.json",
+            "coal_briquette.json"
+    };
+
+    private static final String[] EXAMPLE_PACK_FUELS = {
+            "example_fuels.json"
     };
 
     private static final String[] EXAMPLE_PACK_FOOD = {
@@ -229,6 +235,9 @@ public class ListWorkbenchRecipeManager {
                     "/assets/modularcontents/example_pack/weapons/", EXAMPLE_PACK_WEAPONS);
             int npcs = copyExampleResources(new File(examplePackDir, "npcs"),
                     "/assets/modularcontents/example_pack/npcs/", EXAMPLE_PACK_NPCS);
+            int fuels = copyExampleResources(new File(examplePackDir, "fuels"),
+                    "/assets/modularcontents/example_pack/fuels/", EXAMPLE_PACK_FUELS);
+            LOGGER.info("Created " + fuels + " example fuel definitions");
 
             LOGGER.info("Created example content pack (" + recipes + " recipes, " + lootTables + " loot tables, " + equipment + " equipment presets, " + blocks + " blocks, " + workbenches + " workbenches, " + textures + " textures, " + items + " items, " + food + " foods, " + weapons + " weapons, " + npcs + " npcs) in ModularContents/example_pack");
         } catch (Exception e) {

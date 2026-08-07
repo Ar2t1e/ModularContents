@@ -1,5 +1,6 @@
 package modularcontents.custom.gui;
 
+import modularcontents.custom.client.GuiTheme;
 import com.google.common.base.Predicate;
 import modularcontents.ModularcontentsMod;
 import modularcontents.custom.network.PacketLaptopAirdrop;
@@ -27,11 +28,6 @@ import java.io.IOException;
 public class GuiLaptop extends GuiScreen {
 
     // Style colors
-    private static final int COL_ACCENT = 0xFFFFAA00;
-    private static final int COL_BORDER = 0xFF4A4A4A;
-    private static final int COL_PANEL = 0xFF151515;
-    private static final int COL_TEXT = 0xFFDDDDDD;
-    private static final int COL_TEXT_DIM = 0xFF888888;
 
     private final BlockPos laptopPos;
     private final World world;
@@ -287,16 +283,16 @@ public class GuiLaptop extends GuiScreen {
         int startY = (this.height - panelHeight) / 2;
 
         // Draw Panel Background
-        drawRect(startX, startY, startX + panelWidth, startY + panelHeight, COL_BORDER);
-        drawRect(startX + 1, startY + 1, startX + panelWidth - 1, startY + panelHeight - 1, COL_PANEL);
+        drawRect(startX, startY, startX + panelWidth, startY + panelHeight, GuiTheme.BORDER);
+        drawRect(startX + 1, startY + 1, startX + panelWidth - 1, startY + panelHeight - 1, GuiTheme.PANEL);
 
-        this.drawCenteredString(this.fontRenderer, "Airdrop Tactical Map", this.width / 2, startY + 6, COL_ACCENT);
+        this.drawCenteredString(this.fontRenderer, "Airdrop Tactical Map", this.width / 2, startY + 6, GuiTheme.ACCENT);
 
         int mapX = startX + 10;
         int mapY = startY + 20;
 
         // Draw Map Border
-        drawRect(mapX - 1, mapY - 1, mapX + DISPLAY_SIZE + 1, mapY + DISPLAY_SIZE + 1, COL_BORDER);
+        drawRect(mapX - 1, mapY - 1, mapX + DISPLAY_SIZE + 1, mapY + DISPLAY_SIZE + 1, GuiTheme.BORDER);
         drawRect(mapX, mapY, mapX + DISPLAY_SIZE, mapY + DISPLAY_SIZE, 0xFF111111);
 
         float visibleTexSize = visibleTexSize();
@@ -345,14 +341,14 @@ public class GuiLaptop extends GuiScreen {
             if (selRelX >= 0 && selRelX <= 1.0f && selRelY >= 0 && selRelY <= 1.0f) {
                 int px = mapX + (int)(selRelX * DISPLAY_SIZE);
                 int py = mapY + (int)(selRelY * DISPLAY_SIZE);
-                int markColor = isValidTarget(selectedX, selectedZ) ? COL_ACCENT : 0xFFFF3030;
+                int markColor = isValidTarget(selectedX, selectedZ) ? GuiTheme.ACCENT : 0xFFFF3030;
                 drawRect(px - 3, py - 1, px + 4, py + 2, markColor);
                 drawRect(px - 1, py - 3, px + 2, py + 4, markColor);
             }
         }
 
-        this.fontRenderer.drawString("X", startX + 10, mapY + DISPLAY_SIZE + 9, COL_TEXT_DIM);
-        this.fontRenderer.drawString("Z", startX + 70, mapY + DISPLAY_SIZE + 9, COL_TEXT_DIM);
+        this.fontRenderer.drawString("X", startX + 10, mapY + DISPLAY_SIZE + 9, GuiTheme.TEXT_DIM);
+        this.fontRenderer.drawString("Z", startX + 70, mapY + DISPLAY_SIZE + 9, GuiTheme.TEXT_DIM);
         this.xField.drawTextBox();
         this.zField.drawTextBox();
 
@@ -374,7 +370,7 @@ public class GuiLaptop extends GuiScreen {
 
             // Draw a small background for the tooltip
             drawRect(mouseX + 8, mouseY - 14, mouseX + 12 + strW, mouseY - 2, 0xCC000000);
-            this.fontRenderer.drawString(hoverStr, mouseX + 10, mouseY - 12, COL_ACCENT);
+            this.fontRenderer.drawString(hoverStr, mouseX + 10, mouseY - 12, GuiTheme.ACCENT);
         }
     }
 
@@ -384,7 +380,7 @@ public class GuiLaptop extends GuiScreen {
         int y = cy - size / 2;
 
         drawRect(x - 2, y - 2, x + size + 2, y + size + 2, 0xFF000000);
-        drawRect(x - 1, y - 1, x + size + 1, y + size + 1, COL_ACCENT);
+        drawRect(x - 1, y - 1, x + size + 1, y + size + 1, GuiTheme.ACCENT);
 
         ResourceLocation skin = this.mc.player.getLocationSkin();
         this.mc.getTextureManager().bindTexture(skin);
@@ -489,9 +485,9 @@ public class GuiLaptop extends GuiScreen {
             if (this.visible) {
                 this.hovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
 
-                int borderColor = this.enabled ? (this.hovered ? COL_ACCENT : COL_BORDER) : 0xFF222222;
+                int borderColor = this.enabled ? (this.hovered ? GuiTheme.ACCENT : GuiTheme.BORDER) : 0xFF222222;
                 int bgColor = this.enabled ? (this.hovered ? 0xFF2A2A11 : 0xFF111111) : 0xFF111111;
-                int textColor = this.enabled ? (this.hovered ? COL_ACCENT : COL_TEXT) : 0xFF555555;
+                int textColor = this.enabled ? (this.hovered ? GuiTheme.ACCENT : GuiTheme.TEXT) : 0xFF555555;
 
                 drawRect(this.x, this.y, this.x + this.width, this.y + this.height, borderColor);
                 drawRect(this.x + 1, this.y + 1, this.x + this.width - 1, this.y + this.height - 1, bgColor);

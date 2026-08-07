@@ -1,5 +1,6 @@
 package modularcontents.custom.client;
 
+import modularcontents.custom.pack.PackState;
 import com.google.common.collect.ImmutableSet;
 import modularcontents.custom.item.CustomContentManager;
 import modularcontents.custom.pack.PackZipUtils;
@@ -311,7 +312,7 @@ public class ModularResourcePack implements IResourcePack {
 
     private InputStream findPackResource(ResourceLocation location) throws IOException {
         String fullPath = "assets/" + location.getResourceDomain() + "/" + location.getResourcePath();
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 File resFile = new File(packDir, fullPath);
@@ -325,7 +326,7 @@ public class ModularResourcePack implements IResourcePack {
 
     private boolean packResourceExists(ResourceLocation location) {
         String fullPath = "assets/" + location.getResourceDomain() + "/" + location.getResourcePath();
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 if (new File(packDir, fullPath).exists() && new File(packDir, fullPath).isFile()) {
@@ -339,7 +340,7 @@ public class ModularResourcePack implements IResourcePack {
     private InputStream findTexture(String path) throws IOException {
         // path already contains textures/, e.g., textures/items/fire_axe.png
         String fullPath = "assets/modularcontents/" + path;
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 File textureFile = new File(packDir, fullPath);
@@ -353,7 +354,7 @@ public class ModularResourcePack implements IResourcePack {
 
     private boolean textureExists(String path) {
         String fullPath = "assets/modularcontents/" + path;
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 if (new File(packDir, fullPath).exists()) {

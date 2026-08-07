@@ -1,5 +1,6 @@
 package modularcontents.custom.loot;
 
+import modularcontents.custom.pack.PackState;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -32,7 +33,7 @@ public class AirdropLootManager {
             return;
         }
 
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 File lootTablesDir = new File(packDir, "loot_tables");
