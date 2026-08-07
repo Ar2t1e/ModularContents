@@ -1,40 +1,49 @@
 package modularcontents.custom.gui;
 
+import modularcontents.custom.client.GuiTheme;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import modularcontents.ModularcontentsMod;
 import modularcontents.custom.inventory.ContainerContentCreator;
-import net.minecraft.client.resources.I18n;
+import modularcontents.custom.network.PacketRequestFileContent;
+import modularcontents.custom.network.PacketRequestPackList;
+import modularcontents.custom.network.PacketSaveContent;
+import modularcontents.custom.network.PacketTogglePack;
+import modularcontents.custom.pack.PackMeta;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.GL11;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 public class GuiContentCreator extends GuiContainer {
 
-    private static final int COL_ACCENT = 0xFFFFAA00;
-    private static final int COL_BORDER = 0xFF4A4A4A;
-    private static final int COL_BORDER_DARK = 0xFF2A2A2A;
-    private static final int COL_PANEL_L = 0xFF151515;
-    private static final int COL_PANEL_R = 0xFF18181A;
-    private static final int COL_SLOT_BG = 0xFF111111;
-    private static final int COL_TEXT = 0xFFDDDDDD;
-    private static final int COL_TEXT_DIM = 0xFF888888;
-    private static final int COL_LINE = 0xFF333333;
-    private static final int COL_OUTPUT_BG = 0xFF221111;
-    private static final int COL_GREEN = 0xFF55DD55;
-    private static final int COL_RED = 0xFFFF5555;
 
     private static final int TAB_LOOT = 0;
     private static final int TAB_ITEMS = 1;
@@ -44,77 +53,57 @@ public class GuiContentCreator extends GuiContainer {
     private static final int TAB_NPC = 8;
     private static final int TAB_BLOCK = 9;
     private static final int TAB_FOOD = 10;
+    private static final int TAB_THEME = 11;
 
-    private GuiButton btnTabLoot;
-    private GuiButton btnTabItems;
-    private GuiButton btnTabRecipes;
-    private GuiButton btnTabTabs;
-    private GuiButton btnTabZone;
-    private GuiButton btnTabNpcs;
-    private GuiButton btnTabBlocks;
-    private GuiButton btnTabFood;
+    private static final int[] TAB_ORDER = {TAB_BLOCK, TAB_ITEMS, TAB_FOOD, TAB_LOOT, TAB_RECIPES, TAB_TABS, TAB_ZONE, TAB_NPC, TAB_THEME};
+    private static final String[] TAB_LABELS = {"Blocks", "Items", "Food", "Loot", "Recipes", "Tabs", "Zone", "NPC", "Theme"};
 
-    private GuiButton btnTabUp;
-    private GuiButton btnTabDown;
-    private GuiButton[] tabButtons;
-    private int tabScrollIndex = 0;
-    private static final int VISIBLE_TABS = 7;
+    private static final int BTN_TAB_BASE = 100;
+    private static final int BTN_SAVE = 1;
+    private static final int BTN_APPLY = 2;
+    private static final int BTN_MAP = 3;
+    private static final int BTN_NBT = 4;
 
-    private GuiButton btnGenerate;
-    private GuiButton btnNbtToggle;
-    private GuiButton btnOpenMap;
+    private static final int M = 5;
+    private static final int G = 4;
+    private static final int TAB_W = 74;
+    private static final int TAB_H = 15;
+    private static final int ROW_H = 11;
+    private static final int SCROLL_W = 6;
+    private static final int INV_W = 9 * 18 + 8;
+    private static final int INV_H = 4 * 18 + 4 + 10;
 
-    private GuiTextField txtPackName;
-    private GuiTextField txtFileName;
+    private enum FieldType { STRING, INT, FLOAT, BOOL }
 
-    private GuiTextField txtWeight;
-    private GuiTextField txtItemMin;
-    private GuiTextField txtItemMax;
-    private GuiTextField txtItemChance;
+    private static class EditorField {
+        final String jsonKey;
+        final String label;
+        final FieldType type;
+        final GuiTextField field;
+        final int span;
 
-    private GuiTextField txtItemName;
-    private GuiTextField txtMaxStack;
-    private GuiTextField txtCreativeTab;
-    private GuiTextField txtMaxDamage;
+        EditorField(String jsonKey, String label, FieldType type, GuiTextField field, int span) {
+            this.jsonKey = jsonKey;
+            this.label = label;
+            this.type = type;
+            this.field = field;
+            this.span = span;
+        }
+    }
 
-    private GuiTextField txtRecipeCat;
-    private GuiTextField txtCraftTime;
-    private GuiTextField txtMinDrops;
-    private GuiTextField txtRecipeChance;
-    private GuiTextField txtRecipeNbt;
+    private static class BrowserRow {
+        final boolean isPack;
+        final String pack;
+        final String path;
+        final String label;
 
-    private GuiTextField txtTabName;
-    private GuiTextField txtTabIcon;
-
-    private GuiTextField txtNpcId;
-    private GuiTextField txtNpcName;
-    private GuiTextField txtNpcHealth;
-    private GuiTextField txtNpcSpeed;
-    private GuiTextField txtNpcDamage;
-    private GuiTextField txtNpcFollow;
-    private GuiTextField txtNpcShoot;
-    private GuiTextField txtNpcTexture;
-
-    private GuiTextField txtBlockHardness;
-    private GuiTextField txtBlockResist;
-    private GuiTextField txtBlockLight;
-    private GuiTextField txtBlockTool;
-    private GuiTextField txtBlockMat;
-    private GuiTextField txtBlockHarvest;
-
-    private GuiTextField txtFoodHeal;
-    private GuiTextField txtFoodSat;
-    private GuiTextField txtFoodMeat;
-    private GuiTextField txtFoodAlways;
-    private GuiTextField txtFoodEffect;
-    private GuiTextField txtFoodDur;
-    private GuiTextField txtFoodAmp;
-    private GuiTextField txtFoodProb;
-
-    private final ContainerContentCreator container;
-    private int selectedSlot = -1;
-    private final ItemSettings[] slotSettings = new ItemSettings[27];
-    private final RecipeSlotSettings[] recipeSettings = new RecipeSlotSettings[27];
+        BrowserRow(boolean isPack, String pack, String path, String label) {
+            this.isPack = isPack;
+            this.pack = pack;
+            this.path = path;
+            this.label = label;
+        }
+    }
 
     private static class ItemSettings {
         double chance = 0.5;
@@ -130,11 +119,59 @@ public class GuiContentCreator extends GuiContainer {
         boolean touched = false;
     }
 
+    private final ContainerContentCreator container;
+    private final Map<Integer, List<EditorField>> tabFields = new LinkedHashMap<>();
+    private final ItemSettings[] slotSettings = new ItemSettings[27];
+    private final RecipeSlotSettings[] recipeSettings = new RecipeSlotSettings[27];
+    private final Map<String, List<String>> packFiles = new TreeMap<>();
+    private final List<BrowserRow> browserRows = new ArrayList<>();
+    private final Set<String> disabledPacks = new HashSet<>();
+
+    private int leftX, leftW, centerX, centerW, textX, textW, topY, topH, bottomY, bottomH;
+    private int browserY, browserH, slotsY;
+    private int nextFieldId = 1000;
+
+    private GuiTextField txtPackName;
+    private GuiTextField txtItemMin;
+    private GuiTextField txtItemMax;
+    private GuiTextField txtItemChance;
+    private GuiTextField txtRecipeChance;
+    private GuiTextField txtRecipeNbt;
+    private GuiTextArea jsonEditor;
+
+    private GuiButton btnSave;
+    private GuiButton btnApply;
+    private GuiButton btnMap;
+    private GuiButton btnNbtToggle;
+
+    private int selectedSlot = -1;
+    private String selectedPack = "";
+    private String openedPath = null;
+    private JsonObject baseJson = null;
+    private PackMeta packMeta = null;
+    private boolean jsonDirty = false;
+    private String formSignature = "";
+    private int browserScroll = 0;
+    private float fieldScroll = 0.0f;
+    private float fieldScrollTarget = 0.0f;
+    private int fieldContentHeight = 0;
+    private boolean draggingFieldBar = false;
+    private long lastFrameTime = 0L;
+
+    private String themeKey = "accent";
+    private float themeH = 0.0f;
+    private float themeS = 0.0f;
+    private float themeV = 0.0f;
+    private int themeA = 255;
+    private int draggingThemeSlider = -1;
+    private GuiTextField txtThemeHex;
+    private float themeListScroll = 0.0f;
+    private float themeListScrollTarget = 0.0f;
+    private boolean draggingThemeList = false;
+
     public GuiContentCreator(InventoryPlayer playerInv) {
         super(new ContainerContentCreator(playerInv));
         this.container = (ContainerContentCreator) this.inventorySlots;
-        this.xSize = 338;
-        this.ySize = 240;
         for (int i = 0; i < 27; i++) {
             slotSettings[i] = new ItemSettings();
             recipeSettings[i] = new RecipeSlotSettings();
@@ -143,101 +180,288 @@ public class GuiContentCreator extends GuiContainer {
 
     @Override
     public void initGui() {
+        this.xSize = this.width;
+        this.ySize = this.height;
         super.initGui();
         this.buttonList.clear();
-
         Keyboard.enableRepeatEvents(true);
 
-        this.btnTabLoot = new GuiLaptop.FlatButton(0, guiLeft + 338, guiTop + 20, 50, 14, "Loot");
-        this.btnTabItems = new GuiLaptop.FlatButton(1, guiLeft + 338, guiTop + 20, 50, 14, "Items");
-        this.btnTabBlocks = new GuiLaptop.FlatButton(9, guiLeft + 338, guiTop + 20, 50, 14, "Blocks");
-        this.btnTabFood = new GuiLaptop.FlatButton(10, guiLeft + 338, guiTop + 20, 50, 14, "Food");
-        this.btnTabRecipes = new GuiLaptop.FlatButton(2, guiLeft + 338, guiTop + 20, 50, 14, "Recipes");
-        this.btnTabTabs = new GuiLaptop.FlatButton(4, guiLeft + 338, guiTop + 20, 50, 14, "Tabs");
-        this.btnTabZone = new GuiLaptop.FlatButton(6, guiLeft + 338, guiTop + 20, 50, 14, "Zone");
-        this.btnTabNpcs = new GuiLaptop.FlatButton(8, guiLeft + 338, guiTop + 20, 50, 14, "NPCs");
+        computeLayout();
+        buildFields();
+        buildButtons();
 
-        this.tabButtons = new GuiButton[] {
-            btnTabItems, btnTabBlocks, btnTabFood, btnTabLoot, btnTabRecipes, btnTabTabs, btnTabZone, btnTabNpcs
-        };
+        this.txtPackName = plainField(centerX, 0, 100, 64, selectedPack.isEmpty() ? "example_pack" : selectedPack);
+        this.txtItemMin = plainField(0, 0, 34, 3, "1");
+        this.txtItemMax = plainField(0, 0, 34, 3, "1");
+        this.txtItemChance = plainField(0, 0, 44, 5, "0.5");
+        this.txtRecipeChance = plainField(0, 0, 44, 5, "100");
+        this.txtRecipeNbt = plainField(0, 0, 120, 32000, "");
+        this.txtThemeHex = plainField(0, 0, 70, 8, "FFFFAA00");
+        loadThemeSelection();
 
-        this.btnTabUp = new GuiLaptop.FlatButton(20, guiLeft + 338, guiTop + 4, 50, 12, "^");
-        this.btnTabDown = new GuiLaptop.FlatButton(21, guiLeft + 338, guiTop + 140, 50, 12, "v");
+        this.jsonEditor = new GuiTextArea(fontRenderer, textX, topY + 11, textW, height - M - 22 - topY - 11);
 
-        this.btnGenerate = new GuiLaptop.FlatButton(3, guiLeft + 198, guiTop + 138, 130, 14, tr("generate"));
-        this.btnNbtToggle = new GuiLaptop.FlatButton(5, guiLeft + 70, guiTop + 134, 60, 14, tr("nbt.off"));
-        this.btnOpenMap = new GuiLaptop.FlatButton(7, guiLeft + 40, guiTop + 80, 110, 18, tr("open_map"));
+        layoutStatic();
+        updateTabState();
+        ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketRequestPackList());
+    }
 
-        for (GuiButton btn : tabButtons) {
+    private void computeLayout() {
+        leftX = M;
+        leftW = TAB_W + 8;
+        textW = Math.max(170, Math.min(320, width / 3));
+        textX = width - M - textW;
+        centerX = leftX + leftW + G;
+        centerW = textX - G - centerX;
+
+        bottomH = INV_H;
+        bottomY = height - M - bottomH;
+        topY = M;
+        topH = bottomY - G - topY;
+
+        browserY = topY + 4 + TAB_ORDER.length * (TAB_H + 2) + 18;
+        browserH = Math.max(ROW_H, topY + topH - browserY - 4);
+    }
+
+    private void buildButtons() {
+        for (int i = 0; i < TAB_ORDER.length; i++) {
+            GuiButton btn = new GuiLaptop.FlatButton(BTN_TAB_BASE + i, leftX + 4, topY + 4 + i * (TAB_H + 2), TAB_W, TAB_H, TAB_LABELS[i]);
             this.buttonList.add(btn);
         }
-        this.buttonList.add(btnTabUp);
-        this.buttonList.add(btnTabDown);
 
-        this.buttonList.add(btnGenerate);
+        int btnY = height - M - 18;
+        int halfW = (textW - 4) / 2;
+        this.btnApply = new GuiLaptop.FlatButton(BTN_APPLY, textX, btnY, halfW, 16, tr("btn.apply"));
+        this.btnSave = new GuiLaptop.FlatButton(BTN_SAVE, textX + halfW + 4, btnY, textW - halfW - 4, 16, tr("btn.save"));
+        this.btnMap = new GuiLaptop.FlatButton(BTN_MAP, centerX + 8, topY + 40, 110, 18, tr("open_map"));
+        this.btnNbtToggle = new GuiLaptop.FlatButton(BTN_NBT, 0, 0, 60, 14, tr("nbt.off"));
+
+        this.buttonList.add(btnApply);
+        this.buttonList.add(btnSave);
+        this.buttonList.add(btnMap);
         this.buttonList.add(btnNbtToggle);
-        this.buttonList.add(btnOpenMap);
+    }
 
-        this.txtPackName = createField(9, 45, 6, 80, 14, "example_pack");
-        this.txtFileName = createField(10, 198, 42, 130, 32, "my_file");
+    private GuiTextField plainField(int x, int y, int w, int maxLength, String text) {
+        GuiTextField field = new GuiTextField(nextFieldId++, fontRenderer, x, y, w, 12);
+        field.setMaxStringLength(maxLength);
+        field.setText(text);
+        return field;
+    }
 
-        this.txtWeight = createField(11, 198, 65, 50, 4, "50");
+    private void addField(int tab, String jsonKey, String label, FieldType type, String def, int maxLength, int span) {
+        tabFields.computeIfAbsent(tab, k -> new ArrayList<>())
+                .add(new EditorField(jsonKey, label, type, plainField(0, 0, 10, maxLength, def), span));
+    }
 
-        this.txtItemMin = createField(12, 15, 136, 30, 3, "1");
-        this.txtItemMax = createField(13, 55, 136, 30, 3, "1");
-        this.txtItemChance = createField(14, 95, 136, 55, 5, "0.5");
+    private void buildFields() {
+        tabFields.clear();
 
-        this.txtItemName = createField(15, 198, 65, 130, 64, "My Custom Item");
-        this.txtMaxStack = createField(16, 198, 93, 40, 2, "64");
-        this.txtMaxDamage = createField(18, 258, 93, 70, 5, "0");
-        this.txtCreativeTab = createField(17, 198, 121, 130, 32, "misc");
+        addField(TAB_ITEMS, "id", "File name / ID", FieldType.STRING, "my_item", 64, 2);
+        addField(TAB_ITEMS, "display_name", "Display Name", FieldType.STRING, "My Custom Item", 64, 2);
+        addField(TAB_ITEMS, "max_stack_size", "Max Stack", FieldType.INT, "64", 3, 1);
+        addField(TAB_ITEMS, "max_damage", "Durability", FieldType.INT, "0", 6, 1);
+        addField(TAB_ITEMS, "creative_tab", "Creative Tab", FieldType.STRING, "misc", 32, 1);
+        addField(TAB_ITEMS, "burn_time", "Burn Time", FieldType.INT, "0", 6, 1);
 
-        this.txtRecipeCat = createField(19, 198, 65, 130, 32, "general");
-        this.txtCraftTime = createField(20, 198, 93, 50, 5, "200");
-        this.txtMinDrops = createField(21, 258, 93, 70, 5, "1");
-        this.txtRecipeChance = createField(24, 15, 136, 40, 5, "100");
-        this.txtRecipeNbt = createField(25, 198, 121, 130, 32000, "");
+        addField(TAB_BLOCK, "id", "File name / ID", FieldType.STRING, "my_block", 64, 2);
+        addField(TAB_BLOCK, "display_name", "Display Name", FieldType.STRING, "My Custom Block", 64, 2);
+        addField(TAB_BLOCK, "creative_tab", "Creative Tab", FieldType.STRING, "buildingBlocks", 32, 1);
+        addField(TAB_BLOCK, "material", "Material", FieldType.STRING, "rock", 16, 1);
+        addField(TAB_BLOCK, "hardness", "Hardness", FieldType.FLOAT, "1.5", 6, 1);
+        addField(TAB_BLOCK, "resistance", "Resistance", FieldType.FLOAT, "10.0", 6, 1);
+        addField(TAB_BLOCK, "light_level", "Light Level 0-1", FieldType.FLOAT, "0.0", 6, 1);
+        addField(TAB_BLOCK, "tool_class", "Tool Class", FieldType.STRING, "pickaxe", 16, 1);
+        addField(TAB_BLOCK, "harvest_level", "Harvest Level", FieldType.INT, "0", 2, 1);
+        addField(TAB_BLOCK, "block_type", "Block Type", FieldType.STRING, "block", 16, 1);
+        addField(TAB_BLOCK, "rotation_type", "Rotation", FieldType.STRING, "none", 16, 1);
+        addField(TAB_BLOCK, "biome_tint", "Biome Tint", FieldType.STRING, "", 16, 1);
+        addField(TAB_BLOCK, "texture", "Texture", FieldType.STRING, "", 64, 2);
+        addField(TAB_BLOCK, "has_stairs", "Has Stairs", FieldType.BOOL, "false", 5, 1);
+        addField(TAB_BLOCK, "has_slab", "Has Slab", FieldType.BOOL, "false", 5, 1);
+        addField(TAB_BLOCK, "has_fence", "Has Fence", FieldType.BOOL, "false", 5, 1);
+        addField(TAB_BLOCK, "has_wall", "Has Wall", FieldType.BOOL, "false", 5, 1);
+        addField(TAB_BLOCK, "burn_time", "Burn Time", FieldType.INT, "0", 6, 1);
 
-        this.txtTabName = createField(22, 198, 65, 130, 32, "My Custom Tab");
-        this.txtTabIcon = createField(23, 198, 93, 130, 64, "minecraft:diamond_sword");
+        addField(TAB_FOOD, "id", "File name / ID", FieldType.STRING, "my_food", 64, 2);
+        addField(TAB_FOOD, "display_name", "Display Name", FieldType.STRING, "My Custom Food", 64, 2);
+        addField(TAB_FOOD, "max_stack_size", "Max Stack", FieldType.INT, "64", 3, 1);
+        addField(TAB_FOOD, "creative_tab", "Creative Tab", FieldType.STRING, "food", 32, 1);
+        addField(TAB_FOOD, "heal_amount", "Heal Amount", FieldType.INT, "4", 3, 1);
+        addField(TAB_FOOD, "saturation", "Saturation", FieldType.FLOAT, "0.3", 6, 1);
+        addField(TAB_FOOD, "is_meat", "Is Meat", FieldType.BOOL, "false", 5, 1);
+        addField(TAB_FOOD, "always_edible", "Always Edible", FieldType.BOOL, "false", 5, 1);
+        addField(TAB_FOOD, "potion_effect", "Potion Effect", FieldType.STRING, "", 64, 2);
+        addField(TAB_FOOD, "potion_duration", "Duration", FieldType.INT, "100", 6, 1);
+        addField(TAB_FOOD, "potion_amplifier", "Amplifier", FieldType.INT, "0", 2, 1);
+        addField(TAB_FOOD, "potion_probability", "Probability", FieldType.FLOAT, "1.0", 5, 1);
 
-        this.txtNpcId = createField(26, 15, 45, 160, 32, "custom_bandit");
-        this.txtNpcName = createField(27, 15, 73, 160, 32, "Bandit");
-        this.txtNpcHealth = createField(28, 15, 101, 50, 5, "20.0");
-        this.txtNpcSpeed = createField(29, 75, 101, 50, 5, "0.25");
-        this.txtNpcDamage = createField(30, 135, 101, 40, 5, "2.0");
-        this.txtNpcFollow = createField(31, 198, 45, 60, 5, "32.0");
-        this.txtNpcShoot = createField(32, 268, 45, 60, 5, "16.0");
-        this.txtNpcTexture = createField(33, 198, 73, 130, 64, "minecraft:textures/entity/steve.png");
+        addField(TAB_TABS, "id", "File name / ID", FieldType.STRING, "my_tab", 64, 2);
+        addField(TAB_TABS, "display_name", "Display Name", FieldType.STRING, "My Custom Tab", 64, 2);
+        addField(TAB_TABS, "icon", "Icon Item", FieldType.STRING, "minecraft:diamond_sword", 64, 2);
 
-        this.txtBlockHardness = createField(34, 14, 52, 45, 5, "1.5");
-        this.txtBlockResist = createField(35, 75, 52, 45, 5, "10.0");
-        this.txtBlockLight = createField(36, 14, 82, 45, 5, "0.0");
-        this.txtBlockTool = createField(37, 75, 82, 60, 16, "pickaxe");
-        this.txtBlockMat = createField(38, 14, 112, 60, 16, "rock");
-        this.txtBlockHarvest = createField(39, 85, 112, 40, 2, "0");
+        addField(TAB_LOOT, null, "File name", FieldType.STRING, "custom_loot", 64, 2);
+        addField(TAB_LOOT, "weight", "Weight", FieldType.INT, "50", 4, 1);
 
-        this.txtFoodHeal = createField(40, 14, 52, 40, 3, "4");
-        this.txtFoodSat = createField(41, 75, 52, 48, 5, "0.3");
-        this.txtFoodMeat = createField(42, 14, 82, 48, 5, "false");
-        this.txtFoodAlways = createField(43, 75, 82, 48, 5, "false");
-        this.txtFoodEffect = createField(44, 14, 112, 160, 64, "");
-        this.txtFoodDur = createField(45, 14, 138, 40, 5, "100");
-        this.txtFoodAmp = createField(46, 64, 138, 30, 2, "0");
-        this.txtFoodProb = createField(47, 104, 138, 40, 5, "1.0");
+        addField(TAB_RECIPES, "id", "File name / ID", FieldType.STRING, "custom_recipe", 64, 2);
+        addField(TAB_RECIPES, "category", "Category", FieldType.STRING, "general", 32, 1);
+        addField(TAB_RECIPES, "craftingTime", "Craft Ticks", FieldType.INT, "200", 6, 1);
+        addField(TAB_RECIPES, "minDrops", "Min Drops", FieldType.INT, "1", 3, 1);
 
-        updateTabState();
+        addField(TAB_NPC, "id", "File name / ID", FieldType.STRING, "custom_bandit", 64, 2);
+        addField(TAB_NPC, "name", "Name", FieldType.STRING, "Bandit", 32, 2);
+        addField(TAB_NPC, "maxHealth", "Health", FieldType.FLOAT, "20.0", 6, 1);
+        addField(TAB_NPC, "speed", "Speed", FieldType.FLOAT, "0.25", 6, 1);
+        addField(TAB_NPC, "attackDamage", "Damage", FieldType.FLOAT, "2.0", 6, 1);
+        addField(TAB_NPC, "followRange", "Follow Range", FieldType.FLOAT, "32.0", 6, 1);
+        addField(TAB_NPC, "shootRange", "Shoot Range", FieldType.FLOAT, "16.0", 6, 1);
+        addField(TAB_NPC, "texture", "Texture Path", FieldType.STRING, "minecraft:textures/entity/steve.png", 128, 2);
+
+    }
+
+    private void loadThemeSelection() {
+        Integer color = GuiTheme.snapshot().get(themeKey);
+        if (color == null) return;
+        themeA = (color >> 24) & 0xFF;
+        float[] hsv = rgbToHsv((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
+        themeH = hsv[0];
+        themeS = hsv[1];
+        themeV = hsv[2];
+        txtThemeHex.setText(String.format("%08X", color));
+    }
+
+    private int currentThemeColor() {
+        return (themeA << 24) | (hsvToRgb(themeH, themeS, themeV) & 0xFFFFFF);
+    }
+
+    private void pushThemeColor() {
+        int color = currentThemeColor();
+        GuiTheme.apply(themeKey, color);
+        txtThemeHex.setText(String.format("%08X", color));
+        if (!jsonDirty) refreshJsonText();
+    }
+
+    private static float[] rgbToHsv(int r, int g, int b) {
+        float max = Math.max(r, Math.max(g, b)) / 255.0f;
+        float min = Math.min(r, Math.min(g, b)) / 255.0f;
+        float delta = max - min;
+
+        float h = 0.0f;
+        if (delta > 0.0001f) {
+            float rf = r / 255.0f, gf = g / 255.0f, bf = b / 255.0f;
+            if (max == rf) h = 60.0f * (((gf - bf) / delta) % 6.0f);
+            else if (max == gf) h = 60.0f * ((bf - rf) / delta + 2.0f);
+            else h = 60.0f * ((rf - gf) / delta + 4.0f);
+        }
+        if (h < 0.0f) h += 360.0f;
+        return new float[]{h, max <= 0.0f ? 0.0f : delta / max, max};
+    }
+
+    private static int hsvToRgb(float h, float s, float v) {
+        float c = v * s;
+        float x = c * (1.0f - Math.abs((h / 60.0f) % 2.0f - 1.0f));
+        float m = v - c;
+        float r, g, b;
+        if (h < 60) { r = c; g = x; b = 0; }
+        else if (h < 120) { r = x; g = c; b = 0; }
+        else if (h < 180) { r = 0; g = c; b = x; }
+        else if (h < 240) { r = 0; g = x; b = c; }
+        else if (h < 300) { r = x; g = 0; b = c; }
+        else { r = c; g = 0; b = x; }
+        int ri = Math.round((r + m) * 255.0f);
+        int gi = Math.round((g + m) * 255.0f);
+        int bi = Math.round((b + m) * 255.0f);
+        return 0xFF000000 | (ri << 16) | (gi << 8) | bi;
+    }
+
+    private void layoutStatic() {
+        txtPackName.x = packInfoX() + 8;
+        txtPackName.y = bottomY + 18;
+        txtPackName.width = Math.min(140, packInfoWidth() - 16);
+    }
+
+    private int packInfoX() {
+        return M + INV_W + G;
+    }
+
+    private int packInfoWidth() {
+        return textX - G - packInfoX();
+    }
+
+    private int contentTop() {
+        return topY + 24;
+    }
+
+    private int contentBottom() {
+        return topY + topH - 4;
+    }
+
+    private int contentViewHeight() {
+        return Math.max(1, contentBottom() - contentTop());
+    }
+
+    private int maxFieldScroll() {
+        return Math.max(0, fieldContentHeight - contentViewHeight());
+    }
+
+    private int layoutTabFields() {
+        List<EditorField> fields = tabFields.get(container.activeTab);
+        int y = contentTop();
+        if (fields == null) return y;
+
+        int pad = 8;
+        int usableW = centerW - pad * 2 - SCROLL_W;
+        int colW = (usableW - pad) / 2;
+        int column = 0;
+
+        for (EditorField ef : fields) {
+            if (ef.span >= 2 && column == 1) {
+                column = 0;
+                y += 26;
+            }
+            ef.field.x = centerX + pad + column * (colW + pad);
+            ef.field.y = y + 9;
+            ef.field.width = ef.span >= 2 ? usableW : colW;
+
+            if (ef.span >= 2) {
+                y += 26;
+            } else if (column == 1) {
+                column = 0;
+                y += 26;
+            } else {
+                column = 1;
+            }
+        }
+        if (column == 1) y += 26;
+        return y;
+    }
+
+    private int extraContentHeight() {
+        switch (container.activeTab) {
+            case TAB_LOOT: return 112;
+            case TAB_RECIPES: return 150;
+            case TAB_NPC: return 46;
+            case TAB_THEME: return 0;
+            default: return 0;
+        }
+    }
+
+    private void relayout() {
+        slotsY = layoutTabFields() + 6;
+        fieldContentHeight = slotsY + extraContentHeight() - contentTop();
+        clampFieldScroll();
+        layoutSlots();
+        positionSidePanel();
+    }
+
+    private void clampFieldScroll() {
+        int max = maxFieldScroll();
+        fieldScrollTarget = Math.max(0.0f, Math.min(max, fieldScrollTarget));
+        fieldScroll = Math.max(0.0f, Math.min(max, fieldScroll));
     }
 
     private static String tr(String key, Object... args) {
         return I18n.format("modularcontents.creator." + key, args);
-    }
-
-    private GuiTextField createField(int id, int x, int y, int width, int maxLength, String text) {
-        GuiTextField field = new GuiTextField(id, fontRenderer, guiLeft + x, guiTop + y, width, 12);
-        field.setMaxStringLength(maxLength);
-        field.setText(text);
-        return field;
     }
 
     @Override
@@ -249,106 +473,137 @@ public class GuiContentCreator extends GuiContainer {
     @Override
     public void updateScreen() {
         super.updateScreen();
-        for (GuiTextField field : allFields()) {
+        for (GuiTextField field : activeFields()) {
             field.updateCursorCounter();
         }
+        jsonEditor.updateCursorCounter();
+
+        if (jsonEditor.consumeChanged()) {
+            jsonDirty = true;
+        }
+        String signature = formSignature();
+        if (!signature.equals(formSignature)) {
+            formSignature = signature;
+            if (!jsonDirty) refreshJsonText();
+        }
+
     }
 
-    private GuiTextField[] allFields() {
-        return new GuiTextField[]{txtPackName, txtFileName, txtWeight, txtItemMin, txtItemMax, txtItemChance,
-                txtItemName, txtMaxStack, txtCreativeTab, txtMaxDamage,
-                txtRecipeCat, txtCraftTime, txtMinDrops, txtRecipeChance, txtRecipeNbt,
-                txtTabName, txtTabIcon, txtNpcId, txtNpcName, txtNpcHealth, txtNpcSpeed, txtNpcDamage, txtNpcFollow, txtNpcShoot, txtNpcTexture,
-                txtBlockHardness, txtBlockResist, txtBlockLight, txtBlockTool, txtBlockMat, txtBlockHarvest,
-                txtFoodHeal, txtFoodSat, txtFoodMeat, txtFoodAlways, txtFoodEffect, txtFoodDur, txtFoodAmp, txtFoodProb};
+    private String formSignature() {
+        StringBuilder sb = new StringBuilder();
+        List<EditorField> fields = tabFields.get(container.activeTab);
+        if (fields != null) {
+            for (EditorField ef : fields) {
+                sb.append(ef.field.getText()).append('|');
+            }
+        }
+        sb.append(container.activeTab).append('|');
+        for (int i = 0; i < 27; i++) {
+            Slot slot = container.inventorySlots.get(i);
+            if (slot.getHasStack()) {
+                sb.append(i).append('=').append(slot.getStack().getItem().getRegistryName())
+                        .append('x').append(slot.getStack().getCount()).append('|');
+            }
+        }
+        return sb.toString();
+    }
+
+    private List<GuiTextField> activeFields() {
+        List<GuiTextField> list = new ArrayList<>();
+        List<EditorField> fields = tabFields.get(container.activeTab);
+        if (fields != null) {
+            for (EditorField ef : fields) list.add(ef.field);
+        }
+        list.add(txtPackName);
+        if (container.activeTab == TAB_THEME) list.add(txtThemeHex);
+        if (txtItemMin.getVisible()) list.addAll(Arrays.asList(txtItemMin, txtItemMax, txtItemChance));
+        if (txtRecipeChance.getVisible()) list.add(txtRecipeChance);
+        if (txtRecipeNbt.getVisible()) list.add(txtRecipeNbt);
+        return list;
     }
 
     private void updateTabState() {
         int tab = container.activeTab;
 
-        // Dynamic vertical layout for tab buttons
-        btnTabUp.visible = tabScrollIndex > 0;
-        btnTabDown.visible = tabScrollIndex + VISIBLE_TABS < tabButtons.length;
-
-        for (int i = 0; i < tabButtons.length; i++) {
-            GuiButton btn = tabButtons[i];
-            if (i >= tabScrollIndex && i < tabScrollIndex + VISIBLE_TABS) {
-                btn.visible = true;
-                btn.y = guiTop + 20 + ((i - tabScrollIndex) * 17);
-            } else {
-                btn.visible = false;
+        for (GuiButton btn : this.buttonList) {
+            if (btn.id >= BTN_TAB_BASE) {
+                btn.enabled = TAB_ORDER[btn.id - BTN_TAB_BASE] != tab;
             }
-            btn.enabled = btn.id != tab;
         }
 
-        boolean isLoot = tab == TAB_LOOT;
-        boolean isItem = tab == TAB_ITEMS;
-        boolean isRecp = tab == TAB_RECIPES;
-        boolean isTabs = tab == TAB_TABS;
         boolean isZone = tab == TAB_ZONE;
-        boolean isNpc = tab == TAB_NPC;
-        boolean isBlock = tab == TAB_BLOCK;
-        boolean isFood = tab == TAB_FOOD;
+        btnMap.visible = isZone;
+        btnSave.visible = !isZone;
+        btnApply.visible = !isZone;
 
-        btnGenerate.visible = !isZone;
-        btnOpenMap.visible = isZone;
+        fieldScroll = 0.0f;
+        fieldScrollTarget = 0.0f;
+        relayout();
+        buildBrowserRows();
 
-        txtPackName.setVisible(true); // Always show pack name for all tabs
-        txtFileName.setVisible(!isZone && !isNpc); // NPC uses its own ID field
-        txtWeight.setVisible(isLoot);
-        txtItemName.setVisible(isItem || isBlock || isFood);
-        txtMaxStack.setVisible(isItem || isFood);
-        txtCreativeTab.setVisible(isItem || isBlock || isFood);
-        txtMaxDamage.setVisible(isItem);
-        txtRecipeCat.setVisible(isRecp);
-        txtCraftTime.setVisible(isRecp);
-        txtMinDrops.setVisible(isRecp);
-        txtTabName.setVisible(isTabs);
-        txtTabIcon.setVisible(isTabs);
+        selectedSlot = -1;
+        updateSidePanel();
+        refreshJsonText();
+    }
 
-        txtNpcId.setVisible(isNpc);
-        txtNpcName.setVisible(isNpc);
-        txtNpcHealth.setVisible(isNpc);
-        txtNpcSpeed.setVisible(isNpc);
-        txtNpcDamage.setVisible(isNpc);
-        txtNpcFollow.setVisible(isNpc);
-        txtNpcShoot.setVisible(isNpc);
-        txtNpcTexture.setVisible(isNpc);
-
-        txtBlockHardness.setVisible(isBlock);
-        txtBlockResist.setVisible(isBlock);
-        txtBlockLight.setVisible(isBlock);
-        txtBlockTool.setVisible(isBlock);
-        txtBlockMat.setVisible(isBlock);
-        txtBlockHarvest.setVisible(isBlock);
-
-        txtFoodHeal.setVisible(isFood);
-        txtFoodSat.setVisible(isFood);
-        txtFoodMeat.setVisible(isFood);
-        txtFoodAlways.setVisible(isFood);
-        txtFoodEffect.setVisible(isFood);
-        txtFoodDur.setVisible(isFood);
-        txtFoodAmp.setVisible(isFood);
-        txtFoodProb.setVisible(isFood);
+    private void layoutSlots() {
+        int tab = container.activeTab;
+        int gridX = centerX + 9;
+        int offset = Math.round(fieldScroll) - 1;
 
         for (int i = 0; i < 27; i++) {
             Slot slot = container.inventorySlots.get(i);
-            if (isLoot) {
-                slot.yPos = 43 + (i / 9) * 18;
-                slot.xPos = 14 + (i % 9) * 18;
-            } else if (isRecp) {
-                slot.yPos = i < 9 ? 41 : 73 + (i / 9 - 1) * 18;
-                slot.xPos = 14 + (i % 9) * 18;
-            } else if (isNpc && i < 6) { // 6 equipment slots for NPC
-                slot.yPos = 31 + (i * 19);
-                slot.xPos = -21;
+            if (tab == TAB_LOOT) {
+                slot.xPos = gridX + (i % 9) * 18;
+                slot.yPos = slotsY + 10 + (i / 9) * 18 - offset;
+            } else if (tab == TAB_RECIPES) {
+                slot.xPos = gridX + (i % 9) * 18;
+                slot.yPos = (i < 9 ? slotsY + 10 : slotsY + 50 + (i / 9 - 1) * 18) - offset;
+            } else if (tab == TAB_NPC && i < 6) {
+                slot.xPos = gridX + i * 20;
+                slot.yPos = slotsY + 10 - offset;
             } else {
+                slot.yPos = -9999;
+            }
+            if (slot.yPos > -9999 && (slot.yPos < contentTop() || slot.yPos + 18 > contentBottom())) {
                 slot.yPos = -9999;
             }
         }
 
-        selectedSlot = -1;
-        updateSidePanel();
+        int invX = M + 5;
+        int invY = bottomY + 7;
+        for (int i = 0; i < 27; i++) {
+            Slot slot = container.inventorySlots.get(27 + i);
+            slot.xPos = invX + (i % 9) * 18;
+            slot.yPos = invY + (i / 9) * 18;
+        }
+        for (int i = 0; i < 9; i++) {
+            Slot slot = container.inventorySlots.get(54 + i);
+            slot.xPos = invX + i * 18;
+            slot.yPos = invY + 3 * 18 + 4;
+        }
+    }
+
+    private void positionSidePanel() {
+        int panelY = slotsY + 70;
+        int panelX = centerX + 8;
+        txtItemMin.x = panelX;
+        txtItemMin.y = panelY + 10;
+        txtItemMax.x = panelX + 44;
+        txtItemMax.y = panelY + 10;
+        txtItemChance.x = panelX + 88;
+        txtItemChance.y = panelY + 10;
+
+        int recpY = slotsY + 106;
+        txtRecipeChance.x = panelX;
+        txtRecipeChance.y = recpY + 10;
+        txtRecipeNbt.x = panelX + 54;
+        txtRecipeNbt.y = recpY + 10;
+        txtRecipeNbt.width = Math.max(60, centerW - 70 - SCROLL_W);
+        btnNbtToggle.x = panelX;
+        btnNbtToggle.y = recpY + 26 - Math.round(fieldScroll);
+        boolean recpSel = container.activeTab == TAB_RECIPES && selectedSlot != -1 && getSelectedStack() != null;
+        btnNbtToggle.visible = recpSel && btnNbtToggle.y >= contentTop() && btnNbtToggle.y + 14 <= contentBottom();
     }
 
     private void updateSidePanel() {
@@ -409,260 +664,585 @@ public class GuiContentCreator extends GuiContainer {
         this.renderHoveredToolTip(mouseX, mouseY);
     }
 
+    private void drawPanel(int x1, int y1, int x2, int y2, int color) {
+        drawRect(x1, y1, x2, y2, GuiTheme.BORDER);
+        drawRect(x1 + 1, y1 + 1, x2 - 1, y2 - 1, color);
+    }
+
     private void drawSlotBox(int x, int y, int bgColor, boolean selected) {
-        drawRect(x, y, x + 18, y + 18, selected ? COL_ACCENT : 0xFF3A3A3A);
+        drawRect(x, y, x + 18, y + 18, selected ? GuiTheme.ACCENT : 0xFF3A3A3A);
         drawRect(x + 1, y + 1, x + 17, y + 17, bgColor);
-        drawRect(x + 1, y + 1, x + 17, y + 2, 0x88000000);
-        drawRect(x + 1, y + 1, x + 2, y + 17, 0x88000000);
     }
 
     @Override
     protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
 
-        drawRect(guiLeft + 3, guiTop + 3, guiLeft + 335, guiTop + 155, COL_BORDER);
-        drawRect(guiLeft + 4, guiTop + 4, guiLeft + 190, guiTop + 154, COL_PANEL_L);
-        drawRect(guiLeft + 192, guiTop + 4, guiLeft + 334, guiTop + 154, COL_PANEL_R);
-        drawRect(guiLeft + 4, guiTop + 4, guiLeft + 334, guiTop + 24, COL_PANEL_L);
-        drawRect(guiLeft + 4, guiTop + 24, guiLeft + 334, guiTop + 25, COL_LINE);
+        drawPanel(leftX, topY, leftX + leftW, topY + topH, GuiTheme.PANEL);
+        drawPanel(centerX, topY, centerX + centerW, topY + topH, GuiTheme.PANEL_ALT);
+        drawPanel(M, bottomY, M + INV_W, bottomY + bottomH, GuiTheme.PANEL);
+        drawPanel(packInfoX(), bottomY, packInfoX() + packInfoWidth(), bottomY + bottomH, GuiTheme.PANEL_ALT);
 
         String title = tr("title");
-        fontRenderer.drawStringWithShadow(title, guiLeft + 328 - fontRenderer.getStringWidth(title), guiTop + 9, COL_ACCENT);
+        fontRenderer.drawStringWithShadow(title, centerX + centerW - fontRenderer.getStringWidth(title) - 8, topY + 8, GuiTheme.ACCENT);
 
-        if (txtPackName.getVisible()) {
-            fontRenderer.drawString("Pack:", guiLeft + 14, guiTop + 6, COL_TEXT_DIM);
-        }
-
-        drawRect(guiLeft + 79, guiTop + 154, guiLeft + 259, guiTop + 238, COL_BORDER);
-        drawRect(guiLeft + 80, guiTop + 155, guiLeft + 258, guiTop + 237, COL_PANEL_R);
-        for (int i = 0; i < 3; ++i) {
-            for (int j = 0; j < 9; ++j) {
-                drawSlotBox(guiLeft + 87 + j * 18, guiTop + 157 + i * 18, COL_SLOT_BG, false);
-            }
-        }
-        for (int k = 0; k < 9; ++k) {
-            drawSlotBox(guiLeft + 87 + k * 18, guiTop + 215, COL_SLOT_BG, false);
-        }
+        drawBrowser(mouseX, mouseY);
+        drawInventoryPanel();
+        drawPackInfo();
+        drawTextEditor();
 
         int tab = container.activeTab;
-        if (tab == TAB_LOOT) {
-            drawLootTab();
-        } else if (tab == TAB_ITEMS) {
-            drawItemsTab();
-        } else if (tab == TAB_RECIPES) {
-            drawRecipesTab();
-        } else if (tab == TAB_TABS) {
-            drawTabsTab();
-        } else if (tab == TAB_ZONE) {
-            drawZoneTab();
-        } else if (tab == TAB_NPC) {
-            drawNpcTab();
-        } else if (tab == TAB_BLOCK) {
-            drawBlockTab();
-        } else if (tab == TAB_FOOD) {
-            drawFoodTab();
+        String header = TAB_LABELS[tabIndex(tab)] + " Editor";
+        fontRenderer.drawString(header, centerX + 8, topY + 8, GuiTheme.ACCENT);
+        drawRect(centerX + 1, topY + 19, centerX + centerW - 1, topY + 20, GuiTheme.LINE);
+
+        advanceScroll();
+        relayout();
+        beginClip(centerX + 1, contentTop(), centerW - 2, contentBottom() - contentTop());
+        GlStateManager.pushMatrix();
+        GlStateManager.translate(0.0f, -fieldScroll, 0.0f);
+
+        List<EditorField> fields = tabFields.get(tab);
+        if (fields != null) {
+            for (EditorField ef : fields) {
+                fontRenderer.drawString(ef.label, ef.field.x, ef.field.y - 9, GuiTheme.TEXT_DIM);
+                ef.field.drawTextBox();
+            }
         }
 
-        for (GuiTextField field : allFields()) {
-            if (field.getVisible()) field.drawTextBox();
+        if (tab == TAB_LOOT) drawLootSlots();
+        else if (tab == TAB_RECIPES) drawRecipeSlots();
+        else if (tab == TAB_NPC) drawNpcSlots();
+        else if (tab == TAB_ZONE) drawZoneInfo();
+        else if (tab == TAB_THEME) drawThemeTab();
+
+        if (txtItemMin.getVisible()) txtItemMin.drawTextBox();
+        if (txtItemMax.getVisible()) txtItemMax.drawTextBox();
+        if (txtItemChance.getVisible()) txtItemChance.drawTextBox();
+        if (txtRecipeChance.getVisible()) txtRecipeChance.drawTextBox();
+        if (txtRecipeNbt.getVisible()) txtRecipeNbt.drawTextBox();
+
+        GlStateManager.popMatrix();
+        endClip();
+        drawFieldScrollBar();
+        txtPackName.drawTextBox();
+    }
+
+    private void advanceScroll() {
+        long now = System.nanoTime();
+        float dt = lastFrameTime == 0L ? 0.016f : Math.min(0.1f, (now - lastFrameTime) / 1.0e9f);
+        lastFrameTime = now;
+
+        float blend = 1.0f - (float) Math.exp(-16.0f * dt);
+
+        themeListScrollTarget = Math.max(0.0f, Math.min(maxThemeListScroll(), themeListScrollTarget));
+        if (draggingThemeList) {
+            themeListScroll = themeListScrollTarget;
+        } else {
+            themeListScroll += (themeListScrollTarget - themeListScroll) * blend;
+            if (Math.abs(themeListScrollTarget - themeListScroll) < 0.05f) themeListScroll = themeListScrollTarget;
+        }
+
+        if (draggingFieldBar) {
+            fieldScroll = fieldScrollTarget;
+            return;
+        }
+        fieldScroll += (fieldScrollTarget - fieldScroll) * blend;
+        if (Math.abs(fieldScrollTarget - fieldScroll) < 0.05f) fieldScroll = fieldScrollTarget;
+    }
+
+    private void beginClip(int x, int y, int w, int h) {
+        int factor = new ScaledResolution(this.mc).getScaleFactor();
+        GL11.glEnable(GL11.GL_SCISSOR_TEST);
+        GL11.glScissor(x * factor, (this.height - (y + h)) * factor, Math.max(0, w) * factor, Math.max(0, h) * factor);
+    }
+
+    private void endClip() {
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    }
+
+    private void drawFieldScrollBar() {
+        int max = maxFieldScroll();
+        if (max <= 0) return;
+
+        int barX = centerX + centerW - SCROLL_W - 2;
+        int trackTop = contentTop();
+        int trackH = contentBottom() - trackTop;
+        drawRect(barX, trackTop, barX + SCROLL_W, trackTop + trackH, GuiTheme.SLOT_BG);
+
+        int thumbH = Math.max(12, trackH * contentViewHeight() / Math.max(1, fieldContentHeight));
+        int thumbY = trackTop + Math.round((trackH - thumbH) * (fieldScroll / max));
+        drawRect(barX, thumbY, barX + SCROLL_W, thumbY + thumbH, GuiTheme.BORDER);
+    }
+
+    private boolean insideContent(int mouseX, int mouseY) {
+        return mouseX >= centerX && mouseX < centerX + centerW && mouseY >= contentTop() && mouseY < contentBottom();
+    }
+
+    private int tabIndex(int tab) {
+        for (int i = 0; i < TAB_ORDER.length; i++) {
+            if (TAB_ORDER[i] == tab) return i;
+        }
+        return 0;
+    }
+
+    private void drawTextEditor() {
+        fontRenderer.drawString(tr("text_editor"), textX, topY - 1, GuiTheme.ACCENT);
+        jsonEditor.draw(0, 0);
+        if (jsonDirty) {
+            String mark = tr("edited");
+            fontRenderer.drawString(mark, textX + textW - fontRenderer.getStringWidth(mark), topY - 1, GuiTheme.RED);
         }
     }
 
-    private void drawLootTab() {
-        fontRenderer.drawString(tr("header.loot"), guiLeft + 14, guiTop + 31, COL_ACCENT);
-        for (int i = 0; i < 27; ++i) {
-            drawSlotBox(guiLeft + 14 + (i % 9) * 18, guiTop + 42 + (i / 9) * 18, COL_SLOT_BG, i == selectedSlot);
+    private void drawBrowser(int mouseX, int mouseY) {
+        fontRenderer.drawString(tr("packs"), leftX + 4, browserY - 10, GuiTheme.TEXT_DIM);
+        drawRect(leftX + 3, browserY, leftX + leftW - 3, browserY + browserH, GuiTheme.SLOT_BG);
+
+        if (browserRows.isEmpty()) {
+            fontRenderer.drawString(tr("hint.no_packs"), leftX + 6, browserY + 4, GuiTheme.TEXT_DIM);
+            return;
         }
 
-        drawSelectedBox();
+        int visible = Math.max(1, browserH / ROW_H);
+        for (int i = 0; i < visible; i++) {
+            int index = browserScroll + i;
+            if (index >= browserRows.size()) break;
+            BrowserRow row = browserRows.get(index);
+            int rowY = browserY + i * ROW_H;
+
+            boolean selected = row.isPack ? row.pack.equals(selectedPack) : row.path.equals(openedPath);
+            if (selected) drawRect(leftX + 4, rowY, leftX + leftW - 4, rowY + ROW_H, GuiTheme.SELECTED);
+
+            int color = row.isPack ? GuiTheme.TEXT : GuiTheme.TEXT_DIM;
+            if (row.isPack && disabledPacks.contains(row.pack)) color = GuiTheme.RED;
+            if (mouseX >= leftX + 4 && mouseX < leftX + leftW - 4 && mouseY >= rowY && mouseY < rowY + ROW_H) {
+                color = GuiTheme.ACCENT;
+            }
+            fontRenderer.drawString(fontRenderer.trimStringToWidth(row.label, leftW - 12), leftX + 6, rowY + 2, color);
+        }
+    }
+
+    private void drawInventoryPanel() {
+        int invX = M + 4;
+        int invY = bottomY + 6;
+        for (int i = 0; i < 27; i++) {
+            drawSlotBox(invX + (i % 9) * 18, invY + (i / 9) * 18, GuiTheme.SLOT_BG, false);
+        }
+        for (int i = 0; i < 9; i++) {
+            drawSlotBox(invX + i * 18, invY + 3 * 18 + 4, GuiTheme.SLOT_BG, false);
+        }
+    }
+
+    private void drawPackInfo() {
+        int x = packInfoX() + 8;
+        int w = packInfoWidth();
+        drawRect(packInfoX() + 1, bottomY + 1, packInfoX() + w - 1, bottomY + 14, GuiTheme.BORDER);
+        fontRenderer.drawString(tr("pack_info"), x, bottomY + 4, GuiTheme.TEXT);
+
+        String author = packMeta != null && !packMeta.author.isEmpty() ? packMeta.author : "-";
+        String version = packMeta != null && !packMeta.version.isEmpty() ? packMeta.version : "-";
+        String description = packMeta != null && !packMeta.description.isEmpty() ? packMeta.description : "-";
+
+        int y = bottomY + 36;
+        fontRenderer.drawString(tr("label.author") + ": " + author, x, y, GuiTheme.TEXT_DIM);
+        fontRenderer.drawString(tr("label.version") + ": " + version, x, y + 11, GuiTheme.TEXT_DIM);
+        fontRenderer.drawString(fontRenderer.trimStringToWidth(tr("label.description") + ": " + description, w - 16), x, y + 22, GuiTheme.TEXT_DIM);
+    }
+
+    private void drawLootSlots() {
+        fontRenderer.drawString(tr("header.loot"), centerX + 8, slotsY, GuiTheme.ACCENT);
+        for (int i = 0; i < 27; ++i) {
+            drawSlotBox(centerX + 8 + (i % 9) * 18, slotsY + 10 + (i / 9) * 18, GuiTheme.SLOT_BG, i == selectedSlot);
+        }
+
+        int panelY = slotsY + 70;
         if (selectedSlot != -1) {
             ItemStack stack = getSelectedStack();
             String header = tr("slot", selectedSlot, stack != null ? stack.getDisplayName() : tr("empty"));
-            fontRenderer.drawString(fontRenderer.trimStringToWidth(header, 166), guiLeft + 14, guiTop + 116, COL_ACCENT);
-            fontRenderer.drawString(tr("label.min"), guiLeft + 15, guiTop + 127, COL_TEXT_DIM);
-            fontRenderer.drawString(tr("label.max"), guiLeft + 55, guiTop + 127, COL_TEXT_DIM);
-            fontRenderer.drawString(tr("label.chance01"), guiLeft + 95, guiTop + 127, COL_TEXT_DIM);
+            fontRenderer.drawString(fontRenderer.trimStringToWidth(header, centerW - 16), centerX + 8, panelY, GuiTheme.ACCENT);
+            fontRenderer.drawString(tr("label.min"), centerX + 8, panelY + 24, GuiTheme.TEXT_DIM);
+            fontRenderer.drawString(tr("label.max"), centerX + 52, panelY + 24, GuiTheme.TEXT_DIM);
+            fontRenderer.drawString(tr("label.chance01"), centerX + 96, panelY + 24, GuiTheme.TEXT_DIM);
         } else {
-            fontRenderer.drawString(tr("hint.loot.1"), guiLeft + 14, guiTop + 122, COL_TEXT_DIM);
-            fontRenderer.drawString(tr("hint.loot.2"), guiLeft + 14, guiTop + 133, COL_TEXT_DIM);
+            fontRenderer.drawString(tr("hint.loot.1"), centerX + 8, panelY, GuiTheme.TEXT_DIM);
+            fontRenderer.drawString(tr("hint.loot.2"), centerX + 8, panelY + 11, GuiTheme.TEXT_DIM);
         }
-
-        drawRightLabel(tr("label.file_name"), 28);
-        drawRightLabel(tr("label.weight"), 56);
-        drawRightInfo(infoLines("info.loot", 5), 86);
     }
 
-    private void drawItemsTab() {
-        fontRenderer.drawString(tr("header.item"), guiLeft + 14, guiTop + 31, COL_ACCENT);
-        drawLeftInfo(infoLines("info.items", 10));
-
-        drawRightLabel(tr("label.item_id"), 28);
-        drawRightLabel(tr("label.display_name"), 56);
-        drawRightLabel(tr("label.max_stack"), 84);
-        fontRenderer.drawString(tr("label.durability"), guiLeft + 258, guiTop + 84, COL_TEXT_DIM);
-        drawRightLabel(tr("label.creative_tab"), 112);
-    }
-
-    private void drawRecipesTab() {
-        fontRenderer.drawString(tr("header.outputs"), guiLeft + 14, guiTop + 29, COL_ACCENT);
+    private void drawRecipeSlots() {
+        fontRenderer.drawString(tr("header.outputs"), centerX + 8, slotsY, GuiTheme.ACCENT);
         for (int i = 0; i < 9; ++i) {
-            drawSlotBox(guiLeft + 14 + i * 18, guiTop + 40, COL_OUTPUT_BG, i == selectedSlot);
+            drawSlotBox(centerX + 8 + i * 18, slotsY + 10, GuiTheme.OUTPUT_BG, i == selectedSlot);
         }
-        fontRenderer.drawString(tr("header.inputs"), guiLeft + 14, guiTop + 61, COL_ACCENT);
+        fontRenderer.drawString(tr("header.inputs"), centerX + 8, slotsY + 40 - 10, GuiTheme.ACCENT);
         for (int i = 9; i < 27; ++i) {
-            drawSlotBox(guiLeft + 14 + (i % 9) * 18, guiTop + 72 + (i / 9 - 1) * 18, COL_SLOT_BG, i == selectedSlot);
+            drawSlotBox(centerX + 8 + (i % 9) * 18, slotsY + 50 + (i / 9 - 1) * 18, GuiTheme.SLOT_BG, i == selectedSlot);
         }
 
-        drawSelectedBox();
+        int panelY = slotsY + 106;
         ItemStack stack = getSelectedStack();
         if (selectedSlot != -1 && stack != null) {
             String kind = selectedSlot < 9 ? tr("output") : tr("input");
             String header = kind + ": " + stack.getDisplayName() + " x" + stack.getCount();
-            fontRenderer.drawString(fontRenderer.trimStringToWidth(header, 168), guiLeft + 14, guiTop + 116, COL_ACCENT);
+            fontRenderer.drawString(fontRenderer.trimStringToWidth(header, centerW - 16), centerX + 8, panelY - 12, GuiTheme.ACCENT);
             if (selectedSlot < 9) {
-                fontRenderer.drawString(tr("label.chance_pct"), guiLeft + 15, guiTop + 127, COL_TEXT_DIM);
+                fontRenderer.drawString(tr("label.chance_pct"), centerX + 8, panelY, GuiTheme.TEXT_DIM);
             }
-            fontRenderer.drawString(tr("label.item_nbt"), guiLeft + 136, guiTop + 127, COL_TEXT_DIM);
-            boolean hasNbt = stack.hasTagCompound();
-            fontRenderer.drawString(hasNbt ? tr("yes") : tr("no"), guiLeft + 136, guiTop + 138, hasNbt ? COL_GREEN : COL_RED);
+            fontRenderer.drawString(tr("label.nbt"), centerX + 62, panelY, GuiTheme.TEXT_DIM);
         } else {
-            fontRenderer.drawString(tr("hint.recipe.1"), guiLeft + 14, guiTop + 122, COL_TEXT_DIM);
-            fontRenderer.drawString(tr("hint.recipe.2"), guiLeft + 14, guiTop + 133, COL_TEXT_DIM);
-        }
-
-        drawRightLabel(tr("label.recipe_id"), 28);
-        drawRightLabel(tr("label.category"), 56);
-        drawRightLabel(tr("label.craft_ticks"), 84);
-        fontRenderer.drawString(tr("label.min_drops"), guiLeft + 258, guiTop + 84, COL_TEXT_DIM);
-        if (txtRecipeNbt.getVisible()) {
-            drawRightLabel(tr("label.nbt"), 112);
+            fontRenderer.drawString(tr("hint.recipe.1"), centerX + 8, panelY, GuiTheme.TEXT_DIM);
+            fontRenderer.drawString(tr("hint.recipe.2"), centerX + 8, panelY + 11, GuiTheme.TEXT_DIM);
         }
     }
 
-    private void drawTabsTab() {
-        fontRenderer.drawString(tr("header.tab"), guiLeft + 14, guiTop + 31, COL_ACCENT);
-        drawLeftInfo(infoLines("info.tabs", 10));
-
-        drawRightLabel(tr("label.tab_id"), 28);
-        drawRightLabel(tr("label.display_name"), 56);
-        drawRightLabel(tr("label.icon"), 84);
-    }
-
-    private void drawZoneTab() {
-        fontRenderer.drawString(tr("header.zone"), guiLeft + 14, guiTop + 31, COL_ACCENT);
-        drawLeftInfo(infoLines("info.zone", 3));
-        drawRightInfo(infoLines("info.zone.right", 8), 30);
-    }
-
-    private void drawNpcTab() {
-        fontRenderer.drawString("NPC Editor", guiLeft + 14, guiTop + 31, COL_ACCENT);
-
-        // Left Panel Text
-        fontRenderer.drawString("ID:", guiLeft + 15, guiTop + 36, COL_TEXT_DIM);
-        fontRenderer.drawString("Name:", guiLeft + 15, guiTop + 64, COL_TEXT_DIM);
-        fontRenderer.drawString("Health", guiLeft + 15, guiTop + 92, COL_TEXT_DIM);
-        fontRenderer.drawString("Speed", guiLeft + 75, guiTop + 92, COL_TEXT_DIM);
-        fontRenderer.drawString("Damage", guiLeft + 135, guiTop + 92, COL_TEXT_DIM);
-
-        // Right Panel Text
-        fontRenderer.drawString("Follow Rg", guiLeft + 198, guiTop + 36, COL_TEXT_DIM);
-        fontRenderer.drawString("Shoot Rg", guiLeft + 268, guiTop + 36, COL_TEXT_DIM);
-        fontRenderer.drawString("Texture Path", guiLeft + 198, guiTop + 64, COL_TEXT_DIM);
-
-        // Vertical Equipment Slots (outside the main left panel)
-        drawRect(guiLeft - 26, guiTop + 24, guiLeft, guiTop + 146, COL_BORDER);
-        drawRect(guiLeft - 25, guiTop + 25, guiLeft, guiTop + 145, COL_PANEL_R);
-
-        fontRenderer.drawString("Equip", guiLeft - 24, guiTop + 15, COL_TEXT_DIM);
-
+    private void drawNpcSlots() {
+        fontRenderer.drawString(tr("header.equipment"), centerX + 8, slotsY, GuiTheme.ACCENT);
+        String[] names = {"Hand", "Off", "Head", "Chest", "Legs", "Feet"};
         for (int i = 0; i < 6; ++i) {
-            drawSlotBox(guiLeft - 22, guiTop + 30 + (i * 19), COL_SLOT_BG, false);
+            drawSlotBox(centerX + 8 + i * 20, slotsY + 10, GuiTheme.SLOT_BG, false);
+            fontRenderer.drawString(names[i], centerX + 8 + i * 20, slotsY + 30, GuiTheme.TEXT_DIM);
         }
     }
 
-    private void drawBlockTab() {
-        fontRenderer.drawString("Block Editor", guiLeft + 14, guiTop + 31, COL_ACCENT);
+    private static final int THEME_ROW_H = 14;
+    private static final int THEME_LIST_W = 116;
+    private static final int SLIDER_H = 6;
+    private static final int SLIDER_GAP = 22;
+    private static final String[] SLIDER_LABELS = {"Hue", "Saturation", "Brightness", "Alpha"};
 
-        fontRenderer.drawString("Hardness", guiLeft + 14, guiTop + 43, COL_TEXT_DIM);
-        fontRenderer.drawString("Resistance", guiLeft + 75, guiTop + 43, COL_TEXT_DIM);
-        fontRenderer.drawString("Light Lv", guiLeft + 14, guiTop + 73, COL_TEXT_DIM);
-        fontRenderer.drawString("Tool", guiLeft + 75, guiTop + 73, COL_TEXT_DIM);
-        fontRenderer.drawString("Material", guiLeft + 14, guiTop + 103, COL_TEXT_DIM);
-        fontRenderer.drawString("Harvest Lv", guiLeft + 85, guiTop + 103, COL_TEXT_DIM);
-
-        drawRightLabel(tr("label.item_id"), 28);
-        drawRightLabel(tr("label.display_name"), 56);
-        drawRightLabel(tr("label.creative_tab"), 112);
+    private int themeSliderX() {
+        return centerX + 16 + THEME_LIST_W;
     }
 
-    private void drawFoodTab() {
-        fontRenderer.drawString("Food Editor", guiLeft + 14, guiTop + 31, COL_ACCENT);
-
-        fontRenderer.drawString("Heal", guiLeft + 14, guiTop + 43, COL_TEXT_DIM);
-        fontRenderer.drawString("Saturation", guiLeft + 75, guiTop + 43, COL_TEXT_DIM);
-        fontRenderer.drawString("Is Meat", guiLeft + 14, guiTop + 73, COL_TEXT_DIM);
-        fontRenderer.drawString("Always Edible", guiLeft + 75, guiTop + 73, COL_TEXT_DIM);
-        fontRenderer.drawString("Potion Effect", guiLeft + 14, guiTop + 103, COL_TEXT_DIM);
-        fontRenderer.drawString("Duration", guiLeft + 14, guiTop + 129, COL_TEXT_DIM);
-        fontRenderer.drawString("Amp", guiLeft + 64, guiTop + 129, COL_TEXT_DIM);
-        fontRenderer.drawString("Prob", guiLeft + 104, guiTop + 129, COL_TEXT_DIM);
-
-        drawRightLabel(tr("label.item_id"), 28);
-        drawRightLabel(tr("label.display_name"), 56);
-        drawRightLabel(tr("label.max_stack"), 84);
-        drawRightLabel(tr("label.creative_tab"), 112);
+    private int themeSliderW() {
+        return Math.max(60, centerW - THEME_LIST_W - 40 - SCROLL_W);
     }
 
-    private String[] infoLines(String key, int count) {
-        String[] lines = new String[count];
-        for (int i = 0; i < count; i++) {
-            String full = "modularcontents.creator." + key + "." + (i + 1);
-            String value = I18n.format(full);
-            lines[i] = value.equals(full) ? "" : value;
+    private int themeTop() {
+        return slotsY + 16;
+    }
+
+    private int themeListBottom() {
+        return contentBottom() - 2;
+    }
+
+    private int maxThemeListScroll() {
+        int visible = themeListBottom() - 2 - themeTop();
+        return Math.max(0, GuiTheme.snapshot().size() * THEME_ROW_H - visible);
+    }
+
+    private int themeSliderY(int index) {
+        return themeTop() + 24 + index * SLIDER_GAP;
+    }
+
+    private void drawThemeTab() {
+        List<String> keys = new ArrayList<>(GuiTheme.snapshot().keySet());
+        Map<String, Integer> colors = GuiTheme.snapshot();
+
+        int top = themeTop();
+        int listX = centerX + 6;
+        int listRight = listX + THEME_LIST_W;
+        int listBottom = themeListBottom();
+        drawRect(listX, slotsY, listRight, listBottom, GuiTheme.BORDER);
+        drawRect(listX + 1, slotsY + 1, listRight - 1, listBottom - 1, GuiTheme.PANEL);
+        fontRenderer.drawString(tr("theme.elements"), listX + 4, slotsY + 3, GuiTheme.TEXT_DIM);
+
+        beginClip(listX + 1, top, THEME_LIST_W - 2, listBottom - 2 - top);
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            int rowY = top + i * THEME_ROW_H - Math.round(themeListScroll);
+            if (rowY + THEME_ROW_H < top || rowY > listBottom) continue;
+            boolean selected = key.equals(themeKey);
+            if (selected) {
+                drawRect(listX + 2, rowY, listRight - 2, rowY + THEME_ROW_H - 1, GuiTheme.SELECTED);
+            }
+            drawRect(listX + 4, rowY + 1, listX + 16, rowY + 12, GuiTheme.BORDER);
+            drawRect(listX + 5, rowY + 2, listX + 15, rowY + 11, colors.get(key));
+            fontRenderer.drawString(key, listX + 20, rowY + 3, selected ? GuiTheme.ACCENT : GuiTheme.TEXT_DIM);
         }
-        return lines;
+        endClip();
+        beginClip(centerX + 1, contentTop(), centerW - 2, contentBottom() - contentTop());
+
+        int maxListScroll = maxThemeListScroll();
+        if (maxListScroll > 0) {
+            int trackX = listRight - 2 - SCROLL_W;
+            int trackTop = top;
+            int trackH = listBottom - 2 - top;
+            drawRect(trackX, trackTop, trackX + SCROLL_W, trackTop + trackH, GuiTheme.SCROLL_TRACK);
+            int thumbH = Math.max(12, trackH * trackH / (trackH + maxListScroll));
+            int thumbY = trackTop + Math.round((trackH - thumbH) * (themeListScroll / maxListScroll));
+            drawRect(trackX, thumbY, trackX + SCROLL_W, thumbY + thumbH, GuiTheme.SCROLL_THUMB);
+        }
+
+        int sx = themeSliderX();
+        int sw = themeSliderW();
+
+        int editorLeft = sx - 8;
+        int editorRight = Math.min(centerX + centerW - SCROLL_W - 4, sx + sw + 34);
+        int editorBottom = themeSliderY(4) + 22;
+        drawRect(editorLeft, slotsY, editorRight, editorBottom, GuiTheme.BORDER);
+        drawRect(editorLeft + 1, slotsY + 1, editorRight - 1, editorBottom - 1, GuiTheme.PANEL);
+        fontRenderer.drawString(tr("theme.color"), editorLeft + 4, slotsY + 3, GuiTheme.TEXT_DIM);
+
+        fontRenderer.drawString(themeKey, sx, top, GuiTheme.ACCENT);
+        drawRect(sx + sw - 18, top - 2, sx + sw, top + 10, GuiTheme.BORDER);
+        drawCheckerboard(sx + sw - 17, top - 1, sx + sw - 1, top + 9);
+        drawRect(sx + sw - 17, top - 1, sx + sw - 1, top + 9, currentThemeColor());
+
+        for (int i = 0; i < 4; i++) {
+            int y = themeSliderY(i);
+            fontRenderer.drawString(SLIDER_LABELS[i], sx, y - 10, GuiTheme.TEXT_DIM);
+            drawSliderTrack(i, sx, y, sw);
+
+            float fraction = sliderFraction(i);
+            int knobX = sx + Math.round(fraction * (sw - 3));
+            drawRect(knobX, y - 3, knobX + 3, y + SLIDER_H + 3, GuiTheme.ACCENT);
+
+            String value = i == 0 ? String.valueOf(Math.round(themeH))
+                    : i == 3 ? String.valueOf(themeA)
+                    : String.valueOf(Math.round((i == 1 ? themeS : themeV) * 100.0f));
+            fontRenderer.drawString(value, sx + sw + 6, y - 1, GuiTheme.TEXT);
+        }
+
+        int hexY = themeSliderY(4);
+        fontRenderer.drawString("Hex (AARRGGBB)", sx, hexY - 10, GuiTheme.TEXT_DIM);
+        txtThemeHex.x = sx;
+        txtThemeHex.y = hexY;
+        txtThemeHex.setVisible(true);
+        txtThemeHex.drawTextBox();
     }
 
-    private void drawRightLabel(String text, int y) {
-        fontRenderer.drawString(text, guiLeft + 198, guiTop + y, COL_TEXT_DIM);
-    }
-
-    private void drawLeftInfo(String[] lines) {
-        for (int i = 0; i < lines.length; i++) {
-            fontRenderer.drawString(lines[i], guiLeft + 14, guiTop + 44 + i * 11, COL_TEXT_DIM);
+    private float sliderFraction(int index) {
+        switch (index) {
+            case 0: return themeH / 360.0f;
+            case 1: return themeS;
+            case 2: return themeV;
+            default: return themeA / 255.0f;
         }
     }
 
-    private void drawRightInfo(String[] lines, int y) {
-        for (int i = 0; i < lines.length; i++) {
-            fontRenderer.drawString(lines[i], guiLeft + 198, guiTop + y + i * 10, COL_TEXT_DIM);
+    private void drawSliderTrack(int index, int x, int y, int w) {
+        drawRect(x - 1, y - 1, x + w + 1, y + SLIDER_H + 1, GuiTheme.BORDER);
+
+        if (index == 0) {
+            for (int seg = 0; seg < 6; seg++) {
+                int x1 = x + seg * w / 6;
+                int x2 = x + (seg + 1) * w / 6;
+                drawHGradient(x1, y, x2, y + SLIDER_H,
+                        hsvToRgb(seg * 60.0f, 1.0f, 1.0f),
+                        hsvToRgb((seg + 1) * 60.0f % 360.0f, 1.0f, 1.0f));
+            }
+            return;
+        }
+
+        if (index == 1) {
+            float v = themeV <= 0.0f ? 1.0f : themeV;
+            drawHGradient(x, y, x + w, y + SLIDER_H, hsvToRgb(themeH, 0.0f, v), hsvToRgb(themeH, 1.0f, v));
+            return;
+        }
+
+        if (index == 2) {
+            drawHGradient(x, y, x + w, y + SLIDER_H, hsvToRgb(themeH, themeS, 0.0f), hsvToRgb(themeH, themeS, 1.0f));
+            return;
+        }
+
+        int rgb = hsvToRgb(themeH, themeS, themeV) & 0xFFFFFF;
+        drawCheckerboard(x, y, x + w, y + SLIDER_H);
+        drawHGradient(x, y, x + w, y + SLIDER_H, rgb, 0xFF000000 | rgb);
+    }
+
+    private void drawCheckerboard(int x1, int y1, int x2, int y2) {
+        drawRect(x1, y1, x2, y2, 0xFFBBBBBB);
+        int cell = 3;
+        for (int y = y1, row = 0; y < y2; y += cell, row++) {
+            for (int x = x1 + (row % 2) * cell; x < x2; x += cell * 2) {
+                drawRect(x, y, Math.min(x + cell, x2), Math.min(y + cell, y2), 0xFF777777);
+            }
         }
     }
 
-    private void drawSelectedBox() {
-        drawRect(guiLeft + 9, guiTop + 111, guiLeft + 185, guiTop + 152, COL_BORDER_DARK);
-        drawRect(guiLeft + 10, guiTop + 112, guiLeft + 184, guiTop + 151, COL_SLOT_BG);
+    private void drawHGradient(int x1, int y1, int x2, int y2, int leftColor, int rightColor) {
+        GlStateManager.disableTexture2D();
+        GlStateManager.enableBlend();
+        GlStateManager.disableAlpha();
+        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA,
+                GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        GlStateManager.shadeModel(GL11.GL_SMOOTH);
+
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        putColorVertex(buffer, x2, y1, rightColor);
+        putColorVertex(buffer, x1, y1, leftColor);
+        putColorVertex(buffer, x1, y2, leftColor);
+        putColorVertex(buffer, x2, y2, rightColor);
+        tessellator.draw();
+
+        GlStateManager.shadeModel(GL11.GL_FLAT);
+        GlStateManager.disableBlend();
+        GlStateManager.enableAlpha();
+        GlStateManager.enableTexture2D();
+    }
+
+    private void putColorVertex(BufferBuilder buffer, int x, int y, int color) {
+        buffer.pos(x, y, this.zLevel)
+                .color((color >> 16 & 0xFF) / 255.0f, (color >> 8 & 0xFF) / 255.0f, (color & 0xFF) / 255.0f, (color >> 24 & 0xFF) / 255.0f)
+                .endVertex();
+    }
+
+    private boolean clickThemeTab(int mouseX, int mouseY) {
+        List<String> keys = new ArrayList<>(GuiTheme.snapshot().keySet());
+        if (mouseX >= centerX + 6 && mouseX < centerX + 6 + THEME_LIST_W
+                && mouseY >= themeTop() && mouseY < themeListBottom()) {
+            int trackX = centerX + 6 + THEME_LIST_W - 2 - SCROLL_W;
+            if (maxThemeListScroll() > 0 && mouseX >= trackX) {
+                draggingThemeList = true;
+                dragThemeList(mouseY);
+                return true;
+            }
+            int index = (mouseY + Math.round(themeListScroll) - themeTop()) / THEME_ROW_H;
+            if (index >= 0 && index < keys.size()) {
+                themeKey = keys.get(index);
+                loadThemeSelection();
+                return true;
+            }
+        }
+
+        int slider = themeSliderAt(mouseX, mouseY);
+        if (slider >= 0) {
+            draggingThemeSlider = slider;
+            dragThemeSlider(mouseX);
+            return true;
+        }
+        return false;
+    }
+
+    private int themeSliderAt(int mouseX, int mouseY) {
+        int sx = themeSliderX();
+        int sw = themeSliderW();
+        for (int i = 0; i < 4; i++) {
+            int y = themeSliderY(i);
+            if (mouseX >= sx - 3 && mouseX <= sx + sw + 3 && mouseY >= y - 6 && mouseY <= y + SLIDER_H + 6) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private void nudgeThemeSlider(int index, int notches) {
+        switch (index) {
+            case 0:
+                themeH = (themeH + notches * 5.0f) % 360.0f;
+                if (themeH < 0.0f) themeH += 360.0f;
+                break;
+            case 1:
+                themeS = Math.max(0.0f, Math.min(1.0f, themeS + notches * 0.02f));
+                break;
+            case 2:
+                themeV = Math.max(0.0f, Math.min(1.0f, themeV + notches * 0.02f));
+                break;
+            default:
+                themeA = Math.max(0, Math.min(255, themeA + notches * 5));
+                break;
+        }
+        pushThemeColor();
+    }
+
+    private void dragThemeList(int mouseY) {
+        int max = maxThemeListScroll();
+        if (max <= 0) return;
+        float fraction = (mouseY - themeTop()) / (float) Math.max(1, themeListBottom() - 2 - themeTop());
+        themeListScrollTarget = Math.max(0.0f, Math.min(max, fraction * max));
+        themeListScroll = themeListScrollTarget;
+    }
+
+    private void dragThemeSlider(int mouseX) {
+        if (draggingThemeSlider < 0) return;
+        int sx = themeSliderX();
+        int sw = themeSliderW();
+        float f = Math.max(0.0f, Math.min(1.0f, (mouseX - sx) / (float) Math.max(1, sw - 3)));
+        switch (draggingThemeSlider) {
+            case 0: themeH = f * 360.0f; break;
+            case 1: themeS = f; break;
+            case 2: themeV = f; break;
+            default: themeA = Math.round(f * 255.0f); break;
+        }
+        pushThemeColor();
+    }
+
+    private void drawZoneInfo() {
+        fontRenderer.drawString(tr("header.zone"), centerX + 8, topY + 26, GuiTheme.ACCENT);
     }
 
     @Override
     protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {}
 
     @Override
+    public void handleMouseInput() throws IOException {
+        super.handleMouseInput();
+        int wheel = Mouse.getEventDWheel();
+        if (wheel == 0) return;
+
+        int notches = wheel / 120;
+        if (notches == 0) notches = wheel > 0 ? 1 : -1;
+
+        int mouseX = Mouse.getEventX() * this.width / this.mc.displayWidth;
+        int mouseY = this.height - Mouse.getEventY() * this.height / this.mc.displayHeight - 1;
+
+        if (jsonEditor.isInside(mouseX, mouseY)) {
+            jsonEditor.scroll(notches);
+        } else if (container.activeTab == TAB_THEME && insideContent(mouseX, mouseY)) {
+            int slider = themeSliderAt(mouseX, mouseY + Math.round(fieldScroll));
+            if (slider >= 0) {
+                nudgeThemeSlider(slider, notches);
+            } else if (mouseX < centerX + 6 + THEME_LIST_W) {
+                themeListScrollTarget = Math.max(0.0f, Math.min(maxThemeListScroll(), themeListScrollTarget - notches * THEME_ROW_H * 2));
+            }
+        } else if (insideContent(mouseX, mouseY)) {
+            fieldScrollTarget = Math.max(0.0f, Math.min(maxFieldScroll(), fieldScrollTarget - notches * 26));
+        } else if (mouseX >= leftX && mouseX < leftX + leftW && mouseY >= browserY && mouseY < browserY + browserH) {
+            int visible = Math.max(1, browserH / ROW_H);
+            int max = Math.max(0, browserRows.size() - visible);
+            browserScroll = Math.max(0, Math.min(max, browserScroll - notches));
+        }
+    }
+
+    @Override
     protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
         super.mouseClicked(mouseX, mouseY, mouseButton);
 
-        for (GuiTextField field : allFields()) {
-            if (field.getVisible()) field.mouseClicked(mouseX, mouseY, mouseButton);
+        jsonEditor.mouseClicked(mouseX, mouseY, mouseButton);
+
+        if (mouseButton == 0 && maxFieldScroll() > 0
+                && mouseX >= centerX + centerW - SCROLL_W - 2 && mouseX < centerX + centerW - 2
+                && mouseY >= contentTop() && mouseY < contentBottom()) {
+            draggingFieldBar = true;
+            dragFieldBar(mouseY);
+            return;
         }
+
+        txtPackName.mouseClicked(mouseX, mouseY, mouseButton);
+        if (insideContent(mouseX, mouseY)) {
+            int localY = mouseY + Math.round(fieldScroll);
+            if (container.activeTab == TAB_THEME && clickThemeTab(mouseX, localY)) return;
+            for (GuiTextField field : activeFields()) {
+                if (field.getVisible()) field.mouseClicked(mouseX, localY, mouseButton);
+            }
+        } else {
+            for (GuiTextField field : activeFields()) {
+                if (field.getVisible()) field.setFocused(false);
+            }
+        }
+
+        if (clickBrowser(mouseX, mouseY)) return;
 
         int tab = container.activeTab;
         if (tab == TAB_LOOT || tab == TAB_RECIPES) {
             for (int i = 0; i < 27; i++) {
                 Slot slot = container.inventorySlots.get(i);
                 if (slot.yPos < 0) continue;
-                int sx = guiLeft + slot.xPos - 1;
-                int sy = guiTop + slot.yPos - 1;
-                if (mouseX >= sx && mouseX < sx + 18 && mouseY >= sy && mouseY < sy + 18) {
+                if (mouseX >= slot.xPos - 1 && mouseX < slot.xPos + 17 && mouseY >= slot.yPos - 1 && mouseY < slot.yPos + 17) {
                     if (selectedSlot != i) {
                         selectedSlot = i;
                         updateSidePanel();
@@ -673,266 +1253,258 @@ public class GuiContentCreator extends GuiContainer {
         }
     }
 
+    private boolean clickBrowser(int mouseX, int mouseY) {
+        if (mouseX < leftX + 4 || mouseX >= leftX + leftW - 4) return false;
+        if (mouseY < browserY || mouseY >= browserY + browserH) return false;
+
+        int index = browserScroll + (mouseY - browserY) / ROW_H;
+        if (index < 0 || index >= browserRows.size()) return false;
+
+        BrowserRow row = browserRows.get(index);
+        if (row.isPack && mouseX < leftX + 4 + fontRenderer.getStringWidth("[x] ")) {
+            boolean enable = disabledPacks.contains(row.pack);
+            if (enable) {
+                disabledPacks.remove(row.pack);
+            } else {
+                disabledPacks.add(row.pack);
+            }
+            ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketTogglePack(row.pack, enable));
+            buildBrowserRows();
+            return true;
+        }
+        if (row.isPack) {
+            selectedPack = row.pack.equals(selectedPack) ? "" : row.pack;
+            txtPackName.setText(selectedPack.isEmpty() ? txtPackName.getText() : selectedPack);
+            packMeta = null;
+            if (!selectedPack.isEmpty()) {
+                ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketRequestFileContent(selectedPack, "pack.json"));
+            }
+            buildBrowserRows();
+        } else {
+            openedPath = row.path;
+            ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketRequestFileContent(row.pack, row.path));
+        }
+        return true;
+    }
+
+    private void dragFieldBar(int mouseY) {
+        int max = maxFieldScroll();
+        if (max <= 0) return;
+        float fraction = (float) (mouseY - contentTop()) / Math.max(1, contentBottom() - contentTop());
+        fieldScrollTarget = Math.max(0.0f, Math.min(max, fraction * max));
+        fieldScroll = fieldScrollTarget;
+    }
+
+    @Override
+    protected void mouseReleased(int mouseX, int mouseY, int state) {
+        super.mouseReleased(mouseX, mouseY, state);
+        jsonEditor.mouseReleased();
+        draggingFieldBar = false;
+        draggingThemeSlider = -1;
+        draggingThemeList = false;
+    }
+
+    @Override
+    protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+        super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+        jsonEditor.mouseDragged(mouseY);
+        if (draggingFieldBar) dragFieldBar(mouseY);
+        if (draggingThemeSlider >= 0) dragThemeSlider(mouseX);
+        if (draggingThemeList) dragThemeList(mouseY + Math.round(fieldScroll));
+    }
+
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (txtPackName.getVisible() && txtPackName.textboxKeyTyped(typedChar, keyCode)) return;
-        if (txtFileName.getVisible() && txtFileName.textboxKeyTyped(typedChar, keyCode)) return;
+        if (keyCode != Keyboard.KEY_ESCAPE && jsonEditor.keyTyped(typedChar, keyCode)) return;
 
-        int tab = container.activeTab;
-        if (tab == TAB_LOOT) {
-            if (txtWeight.textboxKeyTyped(typedChar, keyCode)) return;
-            if (selectedSlot != -1) {
-                boolean changed = txtItemMin.textboxKeyTyped(typedChar, keyCode)
-                        || txtItemMax.textboxKeyTyped(typedChar, keyCode)
-                        || txtItemChance.textboxKeyTyped(typedChar, keyCode);
-                if (changed) {
-                    ItemSettings set = slotSettings[selectedSlot];
-                    set.customized = true;
-                    try { set.min = Integer.parseInt(txtItemMin.getText()); } catch (Exception ignored) {}
-                    try { set.max = Integer.parseInt(txtItemMax.getText()); } catch (Exception ignored) {}
-                    try { set.chance = Double.parseDouble(txtItemChance.getText()); } catch (Exception ignored) {}
-                    return;
-                }
+        if (txtPackName.textboxKeyTyped(typedChar, keyCode)) return;
+
+        if (container.activeTab == TAB_THEME && txtThemeHex.textboxKeyTyped(typedChar, keyCode)) {
+            Integer color = GuiTheme.parseColor(txtThemeHex.getText());
+            if (color != null) {
+                GuiTheme.apply(themeKey, color);
+                themeA = (color >> 24) & 0xFF;
+                float[] hsv = rgbToHsv((color >> 16) & 0xFF, (color >> 8) & 0xFF, color & 0xFF);
+                themeH = hsv[0];
+                themeS = hsv[1];
+                themeV = hsv[2];
+                if (!jsonDirty) refreshJsonText();
             }
-        } else if (tab == TAB_ITEMS) {
-            if (txtItemName.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtMaxStack.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtCreativeTab.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtMaxDamage.textboxKeyTyped(typedChar, keyCode)) return;
-        } else if (tab == TAB_RECIPES) {
-            if (txtRecipeCat.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtCraftTime.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtMinDrops.textboxKeyTyped(typedChar, keyCode)) return;
-            if (selectedSlot != -1) {
-                boolean changed = (txtRecipeChance.getVisible() && txtRecipeChance.textboxKeyTyped(typedChar, keyCode))
-                        || (txtRecipeNbt.getVisible() && txtRecipeNbt.textboxKeyTyped(typedChar, keyCode));
-                if (changed) {
-                    RecipeSlotSettings set = recipeSettings[selectedSlot];
-                    set.touched = true;
-                    try { set.chance = Float.parseFloat(txtRecipeChance.getText()); } catch (Exception ignored) {}
-                    set.nbt = txtRecipeNbt.getText();
-                    return;
-                }
-            }
-        } else if (tab == TAB_TABS) {
-            if (txtTabName.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtTabIcon.textboxKeyTyped(typedChar, keyCode)) return;
-        } else if (tab == TAB_NPC) {
-            if (txtNpcId.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtNpcName.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtNpcHealth.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtNpcSpeed.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtNpcDamage.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtNpcFollow.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtNpcShoot.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtNpcTexture.textboxKeyTyped(typedChar, keyCode)) return;
-        } else if (tab == TAB_BLOCK) {
-            if (txtBlockHardness.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtBlockResist.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtBlockLight.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtBlockTool.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtBlockMat.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtBlockHarvest.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtItemName.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtCreativeTab.textboxKeyTyped(typedChar, keyCode)) return;
-        } else if (tab == TAB_FOOD) {
-            if (txtFoodHeal.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtFoodSat.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtFoodMeat.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtFoodAlways.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtFoodEffect.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtFoodDur.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtFoodAmp.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtFoodProb.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtItemName.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtMaxStack.textboxKeyTyped(typedChar, keyCode)) return;
-            if (txtCreativeTab.textboxKeyTyped(typedChar, keyCode)) return;
+            return;
         }
+
+        List<EditorField> fields = tabFields.get(container.activeTab);
+        if (fields != null) {
+            for (EditorField ef : fields) {
+                if (ef.field.textboxKeyTyped(typedChar, keyCode)) return;
+            }
+        }
+
+        if (selectedSlot != -1 && container.activeTab == TAB_LOOT) {
+            boolean changed = txtItemMin.textboxKeyTyped(typedChar, keyCode)
+                    || txtItemMax.textboxKeyTyped(typedChar, keyCode)
+                    || txtItemChance.textboxKeyTyped(typedChar, keyCode);
+            if (changed) {
+                ItemSettings set = slotSettings[selectedSlot];
+                set.customized = true;
+                try { set.min = Integer.parseInt(txtItemMin.getText()); } catch (Exception ignored) {}
+                try { set.max = Integer.parseInt(txtItemMax.getText()); } catch (Exception ignored) {}
+                try { set.chance = Double.parseDouble(txtItemChance.getText()); } catch (Exception ignored) {}
+                if (!jsonDirty) refreshJsonText();
+                return;
+            }
+        }
+
+        if (selectedSlot != -1 && container.activeTab == TAB_RECIPES) {
+            boolean changed = (txtRecipeChance.getVisible() && txtRecipeChance.textboxKeyTyped(typedChar, keyCode))
+                    || (txtRecipeNbt.getVisible() && txtRecipeNbt.textboxKeyTyped(typedChar, keyCode));
+            if (changed) {
+                RecipeSlotSettings set = recipeSettings[selectedSlot];
+                set.touched = true;
+                try { set.chance = Float.parseFloat(txtRecipeChance.getText()); } catch (Exception ignored) {}
+                set.nbt = txtRecipeNbt.getText();
+                if (!jsonDirty) refreshJsonText();
+                return;
+            }
+        }
+
         super.keyTyped(typedChar, keyCode);
     }
 
     @Override
     protected void actionPerformed(GuiButton button) throws IOException {
-        if (button.id == 20) { // Up
-            if (tabScrollIndex > 0) tabScrollIndex--;
+        if (button.id >= BTN_TAB_BASE) {
+            container.activeTab = TAB_ORDER[button.id - BTN_TAB_BASE];
+            openedPath = null;
+            baseJson = null;
+            jsonDirty = false;
+            browserScroll = 0;
             updateTabState();
-        } else if (button.id == 21) { // Down
-            if (tabScrollIndex + VISIBLE_TABS < tabButtons.length) tabScrollIndex++;
-            updateTabState();
-        } else if (button.id == 0 || button.id == 1 || button.id == 2 || button.id == 4 || button.id == 6 || button.id == 8 || button.id == 9 || button.id == 10) {
-            container.activeTab = button.id;
-            updateTabState();
-        } else if (button.id == 3) {
-            if (container.activeTab == TAB_LOOT) generateLootTable();
-            else if (container.activeTab == TAB_ITEMS) generateItem();
-            else if (container.activeTab == TAB_RECIPES) generateRecipe();
-            else if (container.activeTab == TAB_TABS) generateTab();
-            else if (container.activeTab == TAB_NPC) generateNpc();
-            else if (container.activeTab == TAB_BLOCK) generateBlock();
-            else if (container.activeTab == TAB_FOOD) generateFood();
-        } else if (button.id == 7) {
-            this.mc.displayGuiScreen(new GuiZoneEquipment());
-        } else if (button.id == 5 && selectedSlot != -1) {
-            RecipeSlotSettings set = recipeSettings[selectedSlot];
-            set.useNbt = !set.useNbt;
-            set.touched = true;
-            ItemStack stack = getSelectedStack();
-            if (set.useNbt && set.nbt.isEmpty() && stack != null && stack.hasTagCompound()) {
-                set.nbt = stack.getTagCompound().toString();
-                txtRecipeNbt.setText(set.nbt);
-            }
-            btnNbtToggle.displayString = set.useNbt ? tr("nbt.on") : tr("nbt.off");
+            return;
+        }
+
+        switch (button.id) {
+            case BTN_SAVE:
+                saveCurrent();
+                break;
+            case BTN_APPLY:
+                applyJsonText();
+                break;
+            case BTN_MAP:
+                this.mc.displayGuiScreen(new GuiZoneEquipment());
+                break;
+            case BTN_NBT:
+                if (selectedSlot != -1) {
+                    RecipeSlotSettings set = recipeSettings[selectedSlot];
+                    set.useNbt = !set.useNbt;
+                    set.touched = true;
+                    ItemStack stack = getSelectedStack();
+                    if (set.useNbt && set.nbt.isEmpty() && stack != null && stack.hasTagCompound()) {
+                        set.nbt = stack.getTagCompound().toString();
+                        txtRecipeNbt.setText(set.nbt);
+                    }
+                    btnNbtToggle.displayString = set.useNbt ? tr("nbt.on") : tr("nbt.off");
+                    if (!jsonDirty) refreshJsonText();
+                }
+                break;
+            default:
+                break;
         }
     }
 
-    private void generateLootTable() {
-        String fileName = txtFileName.getText().trim();
-        if (fileName.isEmpty()) fileName = "custom_loot";
-        if (!fileName.endsWith(".json")) fileName += ".json";
+    private JsonObject buildJson() {
+        if (container.activeTab == TAB_THEME) {
+            return new JsonParser().parse(GuiTheme.toJson()).getAsJsonObject();
+        }
+        JsonObject root = baseJson == null
+                ? new JsonObject()
+                : new JsonParser().parse(baseJson.toString()).getAsJsonObject();
+        List<EditorField> fields = tabFields.get(container.activeTab);
+        if (fields != null) {
+            for (EditorField ef : fields) {
+                if (ef.jsonKey == null) continue;
+                String text = ef.field.getText().trim();
+                if (text.isEmpty()) continue;
+                try {
+                    switch (ef.type) {
+                        case INT:
+                            root.addProperty(ef.jsonKey, Integer.parseInt(text));
+                            break;
+                        case FLOAT:
+                            root.addProperty(ef.jsonKey, Float.parseFloat(text));
+                            break;
+                        case BOOL:
+                            root.addProperty(ef.jsonKey, Boolean.parseBoolean(text));
+                            break;
+                        default:
+                            root.addProperty(ef.jsonKey, text);
+                            break;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
 
-        int weight = 10;
-        try { weight = Integer.parseInt(txtWeight.getText()); } catch (Exception ignored) {}
+        int tab = container.activeTab;
+        if (tab == TAB_LOOT) {
+            putIfFilled(root, "items", buildLootItems());
+        } else if (tab == TAB_RECIPES) {
+            putIfFilled(root, "outputs", buildRecipeStacks(0, 9, true));
+            putIfFilled(root, "inputs", buildRecipeStacks(9, 27, false));
+        } else if (tab == TAB_NPC) {
+            JsonObject equipment = buildEquipment();
+            if (equipment.entrySet().size() > 0 || !root.has("equipment")) root.add("equipment", equipment);
+        }
+        return root;
+    }
 
-        JsonArray itemsArray = new JsonArray();
+    private void putIfFilled(JsonObject root, String key, JsonArray array) {
+        if (array.size() > 0 || !root.has(key)) root.add(key, array);
+    }
+
+    private JsonArray buildLootItems() {
+        JsonArray items = new JsonArray();
         for (int i = 0; i < 27; i++) {
             Slot slot = container.inventorySlots.get(i);
-            if (slot != null && slot.getHasStack()) {
-                ItemStack stack = slot.getStack();
-                ItemSettings set = slotSettings[i];
+            if (slot == null || !slot.getHasStack()) continue;
+            ItemStack stack = slot.getStack();
+            ItemSettings set = slotSettings[i];
 
-                int finalMax = set.customized ? set.max : stack.getCount();
-                int finalMin = set.min;
-                if (finalMax < finalMin) finalMax = finalMin;
+            int max = set.customized ? set.max : stack.getCount();
+            int min = set.min;
+            if (max < min) max = min;
 
-                JsonObject itemObj = new JsonObject();
-                itemObj.addProperty("item", stack.getItem().getRegistryName().toString());
-                if (stack.getMetadata() > 0) itemObj.addProperty("meta", stack.getMetadata());
-                itemObj.addProperty("min", finalMin);
-                itemObj.addProperty("max", finalMax);
-                itemObj.addProperty("chance", set.chance);
-                itemsArray.add(itemObj);
-            }
+            JsonObject obj = new JsonObject();
+            obj.addProperty("item", stack.getItem().getRegistryName().toString());
+            if (stack.getMetadata() > 0) obj.addProperty("meta", stack.getMetadata());
+            obj.addProperty("min", min);
+            obj.addProperty("max", max);
+            obj.addProperty("chance", set.chance);
+            items.add(obj);
         }
-
-        if (itemsArray.size() == 0) {
-            mc.player.sendMessage(new TextComponentString(TextFormatting.RED + tr("msg.empty_loot")));
-            return;
-        }
-
-        JsonObject root = new JsonObject();
-        root.addProperty("weight", weight);
-        root.add("items", itemsArray);
-        saveJsonFile(root, "loot_tables/airdrops", fileName);
+        return items;
     }
 
-    private void generateItem() {
-        String id = txtFileName.getText().trim();
-        if (id.isEmpty()) id = "custom_item";
-        String fileName = id;
-        if (!fileName.endsWith(".json")) fileName += ".json";
-        else id = id.substring(0, id.length() - 5);
-
-        JsonObject root = new JsonObject();
-        root.addProperty("id", id);
-        root.addProperty("display_name", txtItemName.getText().trim());
-
-        try { root.addProperty("max_stack_size", Integer.parseInt(txtMaxStack.getText())); }
-        catch (Exception e) { root.addProperty("max_stack_size", 64); }
-
-        root.addProperty("creative_tab", txtCreativeTab.getText().trim());
-
-        try { root.addProperty("max_damage", Integer.parseInt(txtMaxDamage.getText())); }
-        catch (Exception e) { root.addProperty("max_damage", 0); }
-
-        saveJsonFile(root, "items", fileName);
-    }
-
-    private JsonObject buildRecipeStack(ItemStack stack, RecipeSlotSettings set, boolean isOutput) {
-        JsonObject itemObj = new JsonObject();
-        itemObj.addProperty("item", stack.getItem().getRegistryName().toString());
-        itemObj.addProperty("count", stack.getCount());
-        if (stack.getMetadata() > 0) itemObj.addProperty("meta", stack.getMetadata());
-        if (isOutput) itemObj.addProperty("chance", set.chance);
-        if (set.useNbt && !set.nbt.trim().isEmpty()) itemObj.addProperty("nbt", set.nbt.trim());
-        return itemObj;
-    }
-
-    private void generateRecipe() {
-        String fileName = txtFileName.getText().trim();
-        if (fileName.isEmpty()) fileName = "custom_recipe";
-        String id = fileName;
-        if (!fileName.endsWith(".json")) fileName += ".json";
-        else id = id.substring(0, id.length() - 5);
-
-        JsonObject root = new JsonObject();
-        root.addProperty("id", id);
-        root.addProperty("category", txtRecipeCat.getText().trim());
-
-        JsonArray outputsArray = new JsonArray();
-        for (int i = 0; i < 9; i++) {
+    private JsonArray buildRecipeStacks(int from, int to, boolean isOutput) {
+        JsonArray array = new JsonArray();
+        for (int i = from; i < to; i++) {
             Slot slot = container.inventorySlots.get(i);
-            if (slot != null && slot.getHasStack()) {
-                outputsArray.add(buildRecipeStack(slot.getStack(), recipeSettings[i], true));
-            }
+            if (slot == null || !slot.getHasStack()) continue;
+            ItemStack stack = slot.getStack();
+            RecipeSlotSettings set = recipeSettings[i];
+
+            JsonObject obj = new JsonObject();
+            obj.addProperty("item", stack.getItem().getRegistryName().toString());
+            obj.addProperty("count", stack.getCount());
+            if (stack.getMetadata() > 0) obj.addProperty("meta", stack.getMetadata());
+            if (isOutput) obj.addProperty("chance", set.chance);
+            if (set.useNbt && !set.nbt.trim().isEmpty()) obj.addProperty("nbt", set.nbt.trim());
+            array.add(obj);
         }
-
-        JsonArray inputsArray = new JsonArray();
-        for (int i = 9; i < 27; i++) {
-            Slot slot = container.inventorySlots.get(i);
-            if (slot != null && slot.getHasStack()) {
-                inputsArray.add(buildRecipeStack(slot.getStack(), recipeSettings[i], false));
-            }
-        }
-
-        if (inputsArray.size() == 0 || outputsArray.size() == 0) {
-            mc.player.sendMessage(new TextComponentString(TextFormatting.RED + tr("msg.recipe_needs")));
-            return;
-        }
-
-        root.add("outputs", outputsArray);
-        root.add("inputs", inputsArray);
-
-        try { root.addProperty("craftingTime", Integer.parseInt(txtCraftTime.getText())); }
-        catch (Exception e) { root.addProperty("craftingTime", 200); }
-
-        try { root.addProperty("minDrops", Integer.parseInt(txtMinDrops.getText())); }
-        catch (Exception e) { root.addProperty("minDrops", 1); }
-
-        saveJsonFile(root, "recipes", fileName);
+        return array;
     }
 
-    private void generateTab() {
-        String id = txtFileName.getText().trim();
-        if (id.isEmpty()) id = "custom_tab";
-        String fileName = id;
-        if (!fileName.endsWith(".json")) fileName += ".json";
-        else id = id.substring(0, id.length() - 5);
-
-        JsonObject root = new JsonObject();
-        root.addProperty("id", id);
-        root.addProperty("display_name", txtTabName.getText().trim());
-        root.addProperty("icon", txtTabIcon.getText().trim());
-
-        saveJsonFile(root, "tabs", fileName);
-    }
-
-    private void generateNpc() {
-        String id = txtNpcId.getText().trim();
-        if (id.isEmpty()) id = "custom_npc";
-        String fileName = id;
-        if (!fileName.endsWith(".json")) fileName += ".json";
-        else id = id.substring(0, id.length() - 5);
-
-        JsonObject root = new JsonObject();
-        root.addProperty("id", id);
-        root.addProperty("name", txtNpcName.getText().trim());
-        try { root.addProperty("maxHealth", Double.parseDouble(txtNpcHealth.getText().trim())); } catch (Exception e) {}
-        try { root.addProperty("speed", Double.parseDouble(txtNpcSpeed.getText().trim())); } catch (Exception e) {}
-        try { root.addProperty("attackDamage", Double.parseDouble(txtNpcDamage.getText().trim())); } catch (Exception e) {}
-        try { root.addProperty("followRange", Double.parseDouble(txtNpcFollow.getText().trim())); } catch (Exception e) {}
-        try { root.addProperty("shootRange", Double.parseDouble(txtNpcShoot.getText().trim())); } catch (Exception e) {}
-        root.addProperty("texture", txtNpcTexture.getText().trim());
-
+    private JsonObject buildEquipment() {
         JsonObject equipment = new JsonObject();
         String[] slots = {"mainhand", "offhand", "head", "chest", "legs", "feet"};
         for (int i = 0; i < 6; i++) {
@@ -941,75 +1513,172 @@ public class GuiContentCreator extends GuiContainer {
                 equipment.addProperty(slots[i], slot.getStack().getItem().getRegistryName().toString());
             }
         }
-        root.add("equipment", equipment);
-
-        saveJsonFile(root, "npcs", fileName);
+        return equipment;
     }
 
-    private void generateBlock() {
-        String id = txtFileName.getText().trim();
-        if (id.isEmpty()) id = "custom_block";
-        String fileName = id;
-        if (!fileName.endsWith(".json")) fileName += ".json";
-        else id = id.substring(0, id.length() - 5);
-
-        JsonObject root = new JsonObject();
-        root.addProperty("id", id);
-        root.addProperty("display_name", txtItemName.getText().trim());
-        root.addProperty("creative_tab", txtCreativeTab.getText().trim());
-        try { root.addProperty("hardness", Float.parseFloat(txtBlockHardness.getText().trim())); } catch (Exception ignored) {}
-        try { root.addProperty("resistance", Float.parseFloat(txtBlockResist.getText().trim())); } catch (Exception ignored) {}
-        try { root.addProperty("light_level", Float.parseFloat(txtBlockLight.getText().trim())); } catch (Exception ignored) {}
-        root.addProperty("tool_class", txtBlockTool.getText().trim());
-        root.addProperty("material", txtBlockMat.getText().trim());
-        try { root.addProperty("harvest_level", Integer.parseInt(txtBlockHarvest.getText().trim())); } catch (Exception ignored) {}
-
-        saveJsonFile(root, "blocks", fileName);
+    private void refreshJsonText() {
+        jsonEditor.setText(new GsonBuilder().setPrettyPrinting().create().toJson(buildJson()));
+        jsonDirty = false;
     }
 
-    private void generateFood() {
-        String id = txtFileName.getText().trim();
-        if (id.isEmpty()) id = "custom_food";
-        String fileName = id;
-        if (!fileName.endsWith(".json")) fileName += ".json";
-        else id = id.substring(0, id.length() - 5);
+    private void applyJsonText() {
+        JsonObject root = parseEditor();
+        if (root == null) return;
+        baseJson = root;
+        applyJson(root);
+        if (container.activeTab == TAB_THEME) {
+            GuiTheme.applyJson(root);
+            loadThemeSelection();
+        }
+        jsonDirty = false;
+        formSignature = formSignature();
+    }
 
-        JsonObject root = new JsonObject();
-        root.addProperty("id", id);
-        root.addProperty("display_name", txtItemName.getText().trim());
-        try { root.addProperty("max_stack_size", Integer.parseInt(txtMaxStack.getText().trim())); } catch (Exception ignored) {}
-        root.addProperty("creative_tab", txtCreativeTab.getText().trim());
+    private JsonObject parseEditor() {
+        try {
+            JsonElement element = new JsonParser().parse(jsonEditor.getText());
+            if (!element.isJsonObject()) throw new IllegalArgumentException("not an object");
+            return element.getAsJsonObject();
+        } catch (Exception e) {
+            message(TextFormatting.RED + tr("msg.bad_json") + " " + e.getMessage());
+            return null;
+        }
+    }
 
-        try { root.addProperty("heal_amount", Integer.parseInt(txtFoodHeal.getText().trim())); } catch (Exception ignored) {}
-        try { root.addProperty("saturation", Float.parseFloat(txtFoodSat.getText().trim())); } catch (Exception ignored) {}
-        root.addProperty("is_meat", Boolean.parseBoolean(txtFoodMeat.getText().trim()));
-        root.addProperty("always_edible", Boolean.parseBoolean(txtFoodAlways.getText().trim()));
+    private void applyJson(JsonObject root) {
+        List<EditorField> fields = tabFields.get(container.activeTab);
+        if (fields == null) return;
+        for (EditorField ef : fields) {
+            if (ef.jsonKey == null) continue;
+            JsonElement element = root.get(ef.jsonKey);
+            if (element != null && element.isJsonPrimitive()) {
+                ef.field.setText(element.getAsString());
+            }
+        }
+    }
 
-        String effect = txtFoodEffect.getText().trim();
-        if (!effect.isEmpty()) {
-            root.addProperty("potion_effect", effect);
-            try { root.addProperty("potion_duration", Integer.parseInt(txtFoodDur.getText().trim())); } catch (Exception ignored) {}
-            try { root.addProperty("potion_amplifier", Integer.parseInt(txtFoodAmp.getText().trim())); } catch (Exception ignored) {}
-            try { root.addProperty("potion_probability", Float.parseFloat(txtFoodProb.getText().trim())); } catch (Exception ignored) {}
+    private String tabSubDir(int tab) {
+        switch (tab) {
+            case TAB_ITEMS: return "items";
+            case TAB_BLOCK: return "blocks";
+            case TAB_FOOD: return "food";
+            case TAB_TABS: return "tabs";
+            case TAB_NPC: return "npcs";
+            case TAB_RECIPES: return "recipes";
+            case TAB_LOOT: return "loot_tables/airdrops";
+            default: return null;
+        }
+    }
+
+    private String fileNameField() {
+        List<EditorField> fields = tabFields.get(container.activeTab);
+        if (fields == null || fields.isEmpty()) return "";
+        return fields.get(0).field.getText().trim();
+    }
+
+    private void saveCurrent() {
+        if (container.activeTab == TAB_THEME) {
+            JsonObject root = parseEditor();
+            if (root == null) return;
+            GuiTheme.applyJson(root);
+            loadThemeSelection();
+            boolean ok = GuiTheme.save(this.mc.mcDataDir);
+            message(ok
+                    ? TextFormatting.GREEN + tr("msg.theme_saved")
+                    : TextFormatting.RED + tr("msg.theme_failed"));
+            return;
         }
 
-        saveJsonFile(root, "food", fileName);
-    }
+        String subDir = tabSubDir(container.activeTab);
+        if (subDir == null) return;
 
-    public void receivePackList(String json) {
-        // We will parse this and display it later. For now, it satisfies the server.
-    }
+        if (parseEditor() == null) return;
 
-    public void receiveFileContent(String packName, String filePath, String json) {
-        // Will parse and load JSON here.
-    }
+        String path;
+        if (openedPath != null && openedPath.startsWith(subDir + "/")) {
+            path = openedPath;
+        } else {
+            String name = fileNameField();
+            if (name.isEmpty()) name = "custom";
+            if (!name.endsWith(".json")) name += ".json";
+            path = subDir + "/" + name;
+        }
 
-    private void saveJsonFile(JsonObject root, String subDir, String fileName) {
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        String json = gson.toJson(root);
         String packName = txtPackName.getText().trim();
         if (packName.isEmpty()) packName = "example_pack";
 
-        modularcontents.ModularcontentsMod.PACKET_HANDLER.sendToServer(new modularcontents.custom.network.PacketSaveContent(packName, subDir + "/" + fileName, json));
+        ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketSaveContent(packName, path, jsonEditor.getText()));
+        openedPath = path;
+        ModularcontentsMod.PACKET_HANDLER.sendToServer(new PacketRequestPackList());
+    }
+
+    private void message(String text) {
+        if (mc.player != null) mc.player.sendMessage(new TextComponentString(text));
+    }
+
+    private void buildBrowserRows() {
+        browserRows.clear();
+        String subDir = tabSubDir(container.activeTab);
+
+        for (Map.Entry<String, List<String>> entry : packFiles.entrySet()) {
+            String pack = entry.getKey();
+            boolean open = pack.equals(selectedPack);
+            String mark = disabledPacks.contains(pack) ? "[ ] " : "[x] ";
+            browserRows.add(new BrowserRow(true, pack, null, mark + (open ? "- " : "+ ") + pack));
+            if (!open || subDir == null) continue;
+
+            for (String path : entry.getValue()) {
+                if (!path.startsWith(subDir + "/")) continue;
+                browserRows.add(new BrowserRow(false, pack, path, "  " + path.substring(subDir.length() + 1)));
+            }
+        }
+        int visible = Math.max(1, browserH / ROW_H);
+        browserScroll = Math.max(0, Math.min(Math.max(0, browserRows.size() - visible), browserScroll));
+    }
+
+    public void receivePackList(String json) {
+        packFiles.clear();
+        disabledPacks.clear();
+        try {
+            JsonObject root = new JsonParser().parse(json).getAsJsonObject();
+            JsonObject packs = root.has("packs") ? root.getAsJsonObject("packs") : root;
+            for (Map.Entry<String, JsonElement> entry : packs.entrySet()) {
+                List<String> files = new ArrayList<>();
+                for (JsonElement element : entry.getValue().getAsJsonArray()) {
+                    files.add(element.getAsString());
+                }
+                files.sort(String::compareToIgnoreCase);
+                packFiles.put(entry.getKey(), files);
+            }
+            if (root.has("disabled")) {
+                for (JsonElement element : root.getAsJsonArray("disabled")) {
+                    disabledPacks.add(element.getAsString());
+                }
+            }
+        } catch (Exception e) {
+            message(TextFormatting.RED + "Failed to read pack list: " + e.getMessage());
+        }
+        buildBrowserRows();
+    }
+
+    public void receiveFileContent(String packName, String filePath, String json) {
+        if ("pack.json".equals(filePath)) {
+            try {
+                packMeta = new Gson().fromJson(json, PackMeta.class);
+            } catch (Exception e) {
+                packMeta = null;
+            }
+            return;
+        }
+
+        openedPath = filePath;
+        selectedPack = packName;
+        txtPackName.setText(packName);
+        jsonEditor.setText(json);
+        JsonObject root = parseEditor();
+        baseJson = root;
+        if (root != null) applyJson(root);
+        jsonDirty = false;
+        formSignature = formSignature();
     }
 }

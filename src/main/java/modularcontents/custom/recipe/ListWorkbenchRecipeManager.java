@@ -1,5 +1,6 @@
 package modularcontents.custom.recipe;
 
+import modularcontents.custom.pack.PackState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import modularcontents.custom.config.ModularContentsConfig;
@@ -38,7 +39,7 @@ public class ListWorkbenchRecipeManager {
     private static final String[] CONTENT_FOLDERS = {"recipes", "loot_tables/airdrops", "loot_tables/equipment", "items", "tabs"};
 
     private static boolean hasAnyPack(File rootPacksDir) {
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 for (String folder : CONTENT_FOLDERS) {
@@ -69,7 +70,7 @@ public class ListWorkbenchRecipeManager {
             rootPacksDir.mkdirs();
         }
 
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 File recipeDir = new File(packDir, "recipes");

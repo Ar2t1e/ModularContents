@@ -1,5 +1,6 @@
 package modularcontents.custom.gui;
 
+import modularcontents.custom.client.GuiTheme;
 import modularcontents.ModularcontentsMod;
 import modularcontents.custom.block.TileEntityListWorkbench;
 import modularcontents.custom.inventory.ContainerListWorkbench;
@@ -35,17 +36,6 @@ import java.util.stream.Collectors;
 
 public class GuiListWorkbench extends GuiContainer {
 
-    private static final int COL_ACCENT = 0xFFFFAA00;
-    private static final int COL_BORDER = 0xFF4A4A4A;
-    private static final int COL_BORDER_DARK = 0xFF2A2A2A;
-    private static final int COL_PANEL_L = 0xFF151515;
-    private static final int COL_PANEL_R = 0xFF18181A;
-    private static final int COL_SLOT_BG = 0xFF111111;
-    private static final int COL_TEXT = 0xFFDDDDDD;
-    private static final int COL_TEXT_DIM = 0xFF888888;
-    private static final int COL_LINE = 0xFF333333;
-    private static final int COL_CRAFTABLE = 0xFF55DD55;
-    private static final int COL_CRAFTABLE_DIM = 0xFF2A4A2A;
 
     public static class FlatButton extends GuiButton {
         public FlatButton(int buttonId, int x, int y, int widthIn, int heightIn, String buttonText) {
@@ -57,9 +47,9 @@ public class GuiListWorkbench extends GuiContainer {
             if (this.visible) {
                 this.hovered = mouseX >= this.x && mouseY >= this.y && mouseX < this.x + this.width && mouseY < this.y + this.height;
 
-                int borderColor = this.enabled ? (this.hovered ? COL_ACCENT : COL_BORDER) : 0xFF222222;
-                int bgColor = this.enabled ? (this.hovered ? 0xFF2A2A11 : COL_PANEL_L) : COL_SLOT_BG;
-                int textColor = this.enabled ? (this.hovered ? COL_ACCENT : COL_TEXT) : 0xFF555555;
+                int borderColor = this.enabled ? (this.hovered ? GuiTheme.ACCENT : GuiTheme.BORDER) : 0xFF222222;
+                int bgColor = this.enabled ? (this.hovered ? 0xFF2A2A11 : GuiTheme.PANEL) : GuiTheme.SLOT_BG;
+                int textColor = this.enabled ? (this.hovered ? GuiTheme.ACCENT : GuiTheme.TEXT) : 0xFF555555;
 
                 if (this.enabled && !this.hovered) {
                     drawRect(this.x + 1, this.y + 1, this.x + this.width + 1, this.y + this.height + 1, 0x55000000);
@@ -586,7 +576,7 @@ public class GuiListWorkbench extends GuiContainer {
 
     private void drawSlotBox(int x, int y) {
         drawRect(x - 1, y - 1, x + 17, y + 17, 0xFF3A3A3A);
-        drawRect(x, y, x + 16, y + 16, COL_SLOT_BG);
+        drawRect(x, y, x + 16, y + 16, GuiTheme.SLOT_BG);
         drawRect(x, y, x + 16, y + 1, 0x88000000);
         drawRect(x, y, x + 1, y + 16, 0x88000000);
     }
@@ -605,14 +595,14 @@ public class GuiListWorkbench extends GuiContainer {
                     && mouseY >= visualY && mouseY <= visualY + 19
                     && mouseY >= listTop && mouseY <= listTop + LIST_HEIGHT;
             boolean craftable = isGroupCraftable(group);
-            int bgBorder = (index == selectedGroupIndex) ? COL_ACCENT : (isHovered ? COL_BORDER : (craftable ? COL_CRAFTABLE_DIM : COL_BORDER_DARK));
+            int bgBorder = (index == selectedGroupIndex) ? GuiTheme.ACCENT : (isHovered ? GuiTheme.BORDER : (craftable ? GuiTheme.CRAFTABLE_DIM : GuiTheme.BORDER_DARK));
             int bgFill = (index == selectedGroupIndex) ? 0xFF2A2A11 : (isHovered ? 0xFF222222 : (craftable ? 0xFF16221A : 0xFF181818));
 
             drawRect(guiLeft + 6, rowY, guiLeft + 122, rowY + 19, bgBorder);
             drawRect(guiLeft + 7, rowY + 1, guiLeft + 121, rowY + 18, bgFill);
 
             if (craftable && index != selectedGroupIndex) {
-                drawRect(guiLeft + 7, rowY + 1, guiLeft + 8, rowY + 18, COL_CRAFTABLE);
+                drawRect(guiLeft + 7, rowY + 1, guiLeft + 8, rowY + 18, GuiTheme.CRAFTABLE);
             }
 
             ItemStack result = recipe.getPrimaryResult();
@@ -626,7 +616,7 @@ public class GuiListWorkbench extends GuiContainer {
                 GlStateManager.popMatrix();
 
                 String name = this.fontRenderer.trimStringToWidth(result.getDisplayName(), 92);
-                int tColor = (index == selectedGroupIndex) ? COL_ACCENT : (craftable ? COL_CRAFTABLE : COL_TEXT);
+                int tColor = (index == selectedGroupIndex) ? GuiTheme.ACCENT : (craftable ? GuiTheme.CRAFTABLE : GuiTheme.TEXT);
                 this.fontRenderer.drawString(name, guiLeft + 26, rowY + 6, tColor);
             }
         }
@@ -656,7 +646,7 @@ public class GuiListWorkbench extends GuiContainer {
                     && mouseY >= visualY && mouseY < visualY + 20
                     && mouseY >= listTop && mouseY <= listTop + LIST_HEIGHT;
             boolean craftable = isGroupCraftable(group);
-            int bgBorder = (index == selectedGroupIndex) ? COL_ACCENT : (isHovered ? COL_BORDER : (craftable ? COL_CRAFTABLE : COL_BORDER_DARK));
+            int bgBorder = (index == selectedGroupIndex) ? GuiTheme.ACCENT : (isHovered ? GuiTheme.BORDER : (craftable ? GuiTheme.CRAFTABLE : GuiTheme.BORDER_DARK));
             int bgFill = (index == selectedGroupIndex) ? 0xFF2A2A11 : (isHovered ? 0xFF222222 : (craftable ? 0xFF16221A : 0xFF181818));
 
             drawRect(cx, cy, cx + 20, cy + 20, bgBorder);
@@ -728,15 +718,15 @@ public class GuiListWorkbench extends GuiContainer {
         reqScrollPos += (reqScrollTarget - reqScrollPos) * blend;
         if (Math.abs(reqScrollTarget - reqScrollPos) < 0.1f) reqScrollPos = reqScrollTarget;
 
-        drawRect(guiLeft + 3, guiTop + 3, guiLeft + 335, guiTop + 155, COL_BORDER);
-        drawRect(guiLeft + LEFT_X0, guiTop + PANEL_TOP, guiLeft + LEFT_X1, guiTop + PANEL_BOTTOM, COL_PANEL_L);
-        drawRect(guiLeft + RIGHT_X0, guiTop + PANEL_TOP, guiLeft + RIGHT_X1, guiTop + PANEL_BOTTOM, COL_PANEL_R);
+        drawRect(guiLeft + 3, guiTop + 3, guiLeft + 335, guiTop + 155, GuiTheme.BORDER);
+        drawRect(guiLeft + LEFT_X0, guiTop + PANEL_TOP, guiLeft + LEFT_X1, guiTop + PANEL_BOTTOM, GuiTheme.PANEL);
+        drawRect(guiLeft + RIGHT_X0, guiTop + PANEL_TOP, guiLeft + RIGHT_X1, guiTop + PANEL_BOTTOM, GuiTheme.PANEL_ALT);
 
-        this.drawGradientRect(guiLeft + LEFT_X0, guiTop + 4, guiLeft + LEFT_X1, guiTop + 18, COL_BORDER_DARK, COL_PANEL_L);
-        drawRect(guiLeft + LEFT_X0, guiTop + 18, guiLeft + LEFT_X1, guiTop + 19, COL_LINE);
+        this.drawGradientRect(guiLeft + LEFT_X0, guiTop + 4, guiLeft + LEFT_X1, guiTop + 18, GuiTheme.BORDER_DARK, GuiTheme.PANEL);
+        drawRect(guiLeft + LEFT_X0, guiTop + 18, guiLeft + LEFT_X1, guiTop + 19, GuiTheme.LINE);
 
-        drawRect(guiLeft + 79, guiTop + 154, guiLeft + 259, guiTop + 238, COL_BORDER);
-        drawRect(guiLeft + 80, guiTop + 155, guiLeft + 258, guiTop + 237, COL_PANEL_R);
+        drawRect(guiLeft + 79, guiTop + 154, guiLeft + 259, guiTop + 238, GuiTheme.BORDER);
+        drawRect(guiLeft + 80, guiTop + 155, guiLeft + 258, guiTop + 237, GuiTheme.PANEL_ALT);
 
         int invX = guiLeft + 88;
         int invY = guiTop + 158;
@@ -749,8 +739,8 @@ public class GuiListWorkbench extends GuiContainer {
             drawSlotBox(invX + k * 18, guiTop + 216);
         }
 
-        drawRect(guiLeft + 7, guiTop + 21, guiLeft + 106, guiTop + 33, COL_BORDER);
-        drawRect(guiLeft + 8, guiTop + 22, guiLeft + 105, guiTop + 32, COL_PANEL_L);
+        drawRect(guiLeft + 7, guiTop + 21, guiLeft + 106, guiTop + 33, GuiTheme.BORDER);
+        drawRect(guiLeft + 8, guiTop + 22, guiLeft + 105, guiTop + 32, GuiTheme.PANEL);
         drawRect(guiLeft + 8, guiTop + 22, guiLeft + 105, guiTop + 23, 0x55000000);
         searchField.drawTextBox();
 
@@ -758,17 +748,17 @@ public class GuiListWorkbench extends GuiContainer {
             String catName = categories.get(currentCategoryIndex).toUpperCase();
             int strWidth = this.fontRenderer.getStringWidth(catName);
             int centerCatX = guiLeft + LEFT_X0 + (LEFT_X1 - LEFT_X0 - strWidth) / 2;
-            this.fontRenderer.drawStringWithShadow(catName, centerCatX, guiTop + 8, COL_ACCENT);
+            this.fontRenderer.drawStringWithShadow(catName, centerCatX, guiTop + 8, GuiTheme.ACCENT);
         }
 
         int listTop = guiTop + LIST_TOP;
         int scrollX = guiLeft + 124;
-        drawRect(scrollX, listTop, scrollX + 3, listTop + LIST_HEIGHT, COL_SLOT_BG);
+        drawRect(scrollX, listTop, scrollX + 3, listTop + LIST_HEIGHT, GuiTheme.SLOT_BG);
 
         int maxScroll = getMaxScroll();
         float scrollFrac = maxScroll > 0 ? scrollPos / maxScroll : 0.0f;
         int thumbY = listTop + (int) (scrollFrac * (LIST_HEIGHT - THUMB_HEIGHT));
-        drawRect(scrollX, thumbY, scrollX + 3, thumbY + THUMB_HEIGHT, isScrolling ? COL_ACCENT : 0xFF555555);
+        drawRect(scrollX, thumbY, scrollX + 3, thumbY + THUMB_HEIGHT, isScrolling ? GuiTheme.ACCENT : 0xFF555555);
 
         if (currentGroups.isEmpty()) {
             String empty = "No recipes";
@@ -796,8 +786,8 @@ public class GuiListWorkbench extends GuiContainer {
             int rightX = guiLeft + 140;
             ItemStack primaryResult = recipeToShow.getPrimaryResult();
 
-            this.drawGradientRect(guiLeft + RIGHT_X0, guiTop + 4, guiLeft + RIGHT_X1, guiTop + 44, COL_BORDER_DARK, COL_PANEL_R);
-            drawRect(guiLeft + RIGHT_X0, guiTop + 44, guiLeft + RIGHT_X1, guiTop + 45, COL_LINE);
+            this.drawGradientRect(guiLeft + RIGHT_X0, guiTop + 4, guiLeft + RIGHT_X1, guiTop + 44, GuiTheme.BORDER_DARK, GuiTheme.PANEL_ALT);
+            drawRect(guiLeft + RIGHT_X0, guiTop + 44, guiLeft + RIGHT_X1, guiTop + 45, GuiTheme.LINE);
 
             if (!primaryResult.isEmpty()) {
                 GlStateManager.pushMatrix();
@@ -809,7 +799,7 @@ public class GuiListWorkbench extends GuiContainer {
                 GlStateManager.popMatrix();
 
                 String displayName = this.fontRenderer.trimStringToWidth(primaryResult.getDisplayName(), 130);
-                this.fontRenderer.drawStringWithShadow(displayName, rightX + 38, guiTop + 10, COL_ACCENT);
+                this.fontRenderer.drawStringWithShadow(displayName, rightX + 38, guiTop + 10, GuiTheme.ACCENT);
             }
 
             int progress = Math.max(container.clientProgress, te.getProgress());
@@ -826,9 +816,9 @@ public class GuiListWorkbench extends GuiContainer {
             if (showingActive && total > 0) {
                 int barX0 = rightX + 38;
                 int barX1 = guiLeft + 326;
-                drawRect(barX0, guiTop + 33, barX1, guiTop + 38, COL_SLOT_BG);
+                drawRect(barX0, guiTop + 33, barX1, guiTop + 38, GuiTheme.SLOT_BG);
                 float frac = Math.max(0.0f, Math.min(1.0f, (float) progress / (float) total));
-                drawRect(barX0 + 1, guiTop + 34, barX0 + 1 + (int) ((barX1 - barX0 - 2) * frac), guiTop + 37, COL_ACCENT);
+                drawRect(barX0 + 1, guiTop + 34, barX0 + 1 + (int) ((barX1 - barX0 - 2) * frac), guiTop + 37, GuiTheme.ACCENT);
             } else if (recipeToShow.outputs != null && (recipeToShow.outputs.size() > 1 || recipeToShow.hasChanceOutputs())) {
                 int yieldX = rightX + 38;
                 int shown = 0;
@@ -847,17 +837,17 @@ public class GuiListWorkbench extends GuiContainer {
                     GlStateManager.popMatrix();
 
                     String label = out.chance < 100.0f ? (int) out.chance + "%" : "x" + res.getCount();
-                    int labelColor = out.chance < 100.0f ? COL_ACCENT : 0xFFBBBBBB;
+                    int labelColor = out.chance < 100.0f ? GuiTheme.ACCENT : 0xFFBBBBBB;
                     this.fontRenderer.drawString(label, yieldX + 13, guiTop + 33, labelColor);
                     yieldX += 15 + this.fontRenderer.getStringWidth(label) + 6;
                     shown++;
                 }
             }
 
-            this.fontRenderer.drawString("Item", rightX, guiTop + 48, COL_TEXT_DIM);
+            this.fontRenderer.drawString("Item", rightX, guiTop + 48, GuiTheme.TEXT_DIM);
             String haveNeed = "Have / Need";
-            this.fontRenderer.drawString(haveNeed, guiLeft + 328 - this.fontRenderer.getStringWidth(haveNeed), guiTop + 48, COL_TEXT_DIM);
-            drawRect(guiLeft + RIGHT_X0, guiTop + 58, guiLeft + RIGHT_X1, guiTop + 59, COL_LINE);
+            this.fontRenderer.drawString(haveNeed, guiLeft + 328 - this.fontRenderer.getStringWidth(haveNeed), guiTop + 48, GuiTheme.TEXT_DIM);
+            drawRect(guiLeft + RIGHT_X0, guiTop + 58, guiLeft + RIGHT_X1, guiTop + 59, GuiTheme.LINE);
 
             int totalReqs = recipeToShow.inputs.size();
             int reqListTop = guiTop + REQ_TOP;
@@ -866,10 +856,10 @@ public class GuiListWorkbench extends GuiContainer {
             if (maxReqScroll > 0) {
                 int reqScrollX = guiLeft + 328;
                 float reqFrac = reqScrollPos / maxReqScroll;
-                drawRect(reqScrollX, reqListTop, reqScrollX + 3, reqListTop + REQ_HEIGHT, COL_SLOT_BG);
+                drawRect(reqScrollX, reqListTop, reqScrollX + 3, reqListTop + REQ_HEIGHT, GuiTheme.SLOT_BG);
 
                 int reqThumbY = reqListTop + (int) (reqFrac * (REQ_HEIGHT - REQ_THUMB_HEIGHT));
-                drawRect(reqScrollX, reqThumbY, reqScrollX + 3, reqThumbY + REQ_THUMB_HEIGHT, isReqScrolling ? COL_ACCENT : 0xFF555555);
+                drawRect(reqScrollX, reqThumbY, reqScrollX + 3, reqThumbY + REQ_THUMB_HEIGHT, isReqScrolling ? GuiTheme.ACCENT : 0xFF555555);
             }
 
             enableScissor(guiLeft + RIGHT_X0, reqListTop, RIGHT_X1 - RIGHT_X0, REQ_HEIGHT);
@@ -896,7 +886,7 @@ public class GuiListWorkbench extends GuiContainer {
                 GlStateManager.popMatrix();
 
                 String ingName = this.fontRenderer.trimStringToWidth(reqStack.getDisplayName(), 110);
-                this.fontRenderer.drawString(ingName, rightX + 18, rowY + 3, COL_TEXT);
+                this.fontRenderer.drawString(ingName, rightX + 18, rowY + 3, GuiTheme.TEXT);
 
                 int have = countItemInInventory(ing);
                 int need = ing.count;
@@ -910,7 +900,7 @@ public class GuiListWorkbench extends GuiContainer {
             GlStateManager.popMatrix();
             GL11.glDisable(GL11.GL_SCISSOR_TEST);
 
-            drawRect(guiLeft + RIGHT_X0, guiTop + 119, guiLeft + RIGHT_X1, guiTop + 120, COL_LINE);
+            drawRect(guiLeft + RIGHT_X0, guiTop + 119, guiLeft + RIGHT_X1, guiTop + 120, GuiTheme.LINE);
 
             String amountStr = String.valueOf(craftAmount);
             int strW = this.fontRenderer.getStringWidth(amountStr);
@@ -920,7 +910,7 @@ public class GuiListWorkbench extends GuiContainer {
             int w = this.fontRenderer.getStringWidth(hint);
             this.fontRenderer.drawString(hint, guiLeft + (RIGHT_X0 + RIGHT_X1) / 2 - w / 2, guiTop + 72, 0xFF555555);
 
-            drawRect(guiLeft + RIGHT_X0, guiTop + 119, guiLeft + RIGHT_X1, guiTop + 120, COL_LINE);
+            drawRect(guiLeft + RIGHT_X0, guiTop + 119, guiLeft + RIGHT_X1, guiTop + 120, GuiTheme.LINE);
         }
 
         drawQueueSlots(mouseX, mouseY);
@@ -928,14 +918,14 @@ public class GuiListWorkbench extends GuiContainer {
         int outX = guiLeft + 260;
         int outY = guiTop + 122;
         for (int i = 0; i < TileEntityListWorkbench.OUTPUT_SLOTS; i++) {
-            drawRect(outX + i * 18 - 1, outY - 1, outX + i * 18 + 17, outY + 17, COL_BORDER);
-            drawRect(outX + i * 18, outY, outX + i * 18 + 16, outY + 16, COL_PANEL_L);
+            drawRect(outX + i * 18 - 1, outY - 1, outX + i * 18 + 17, outY + 17, GuiTheme.BORDER);
+            drawRect(outX + i * 18, outY, outX + i * 18 + 16, outY + 16, GuiTheme.PANEL);
             drawRect(outX + i * 18, outY, outX + i * 18 + 16, outY + 1, 0x55000000);
             drawRect(outX + i * 18, outY, outX + i * 18 + 1, outY + 16, 0x55000000);
         }
         String outLabel = "Output";
         int outWidth = TileEntityListWorkbench.OUTPUT_SLOTS * 18 - 2;
-        this.fontRenderer.drawString(outLabel, outX + outWidth / 2 - this.fontRenderer.getStringWidth(outLabel) / 2, outY + 20, COL_TEXT_DIM);
+        this.fontRenderer.drawString(outLabel, outX + outWidth / 2 - this.fontRenderer.getStringWidth(outLabel) / 2, outY + 20, GuiTheme.TEXT_DIM);
     }
 
     private int getQueueSlotX(int index) {
@@ -951,9 +941,9 @@ public class GuiListWorkbench extends GuiContainer {
             boolean occupied = !queuedId.isEmpty();
             boolean hovered = occupied && mouseX >= qx && mouseX < qx + 16 && mouseY >= qy && mouseY < qy + 16;
 
-            int border = hovered ? 0xFFFF5555 : (occupied ? COL_ACCENT : COL_BORDER);
+            int border = hovered ? 0xFFFF5555 : (occupied ? GuiTheme.ACCENT : GuiTheme.BORDER);
             drawRect(qx - 1, qy - 1, qx + 17, qy + 17, border);
-            drawRect(qx, qy, qx + 16, qy + 16, COL_SLOT_BG);
+            drawRect(qx, qy, qx + 16, qy + 16, GuiTheme.SLOT_BG);
             drawRect(qx, qy, qx + 16, qy + 1, 0x88000000);
             drawRect(qx, qy, qx + 1, qy + 16, 0x88000000);
 
@@ -995,7 +985,7 @@ public class GuiListWorkbench extends GuiContainer {
         }
 
         String queueLabel = "Queue";
-        this.fontRenderer.drawString(queueLabel, getQueueSlotX(0) + 26 - this.fontRenderer.getStringWidth(queueLabel) / 2, qy + 20, COL_TEXT_DIM);
+        this.fontRenderer.drawString(queueLabel, getQueueSlotX(0) + 26 - this.fontRenderer.getStringWidth(queueLabel) / 2, qy + 20, GuiTheme.TEXT_DIM);
     }
 
     @Override

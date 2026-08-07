@@ -122,6 +122,9 @@ import modularcontents.custom.network.PacketSendFileContent;
 import modularcontents.custom.network.PacketSendFileContentHandler;
 import modularcontents.custom.network.PacketSaveContent;
 import modularcontents.custom.network.PacketSaveContentHandler;
+import modularcontents.custom.pack.PackState;
+import modularcontents.custom.network.PacketTogglePack;
+import modularcontents.custom.network.PacketTogglePackHandler;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraftforge.oredict.ShapedOreRecipe;
 import java.util.ArrayList;
@@ -164,6 +167,7 @@ public class ModularcontentsMod implements IGuiHandler {
     public void preInit(FMLPreInitializationEvent event) {
         // Load custom config
         ModularContentsConfig.load(event.getModConfigurationDirectory().getParentFile());
+        PackState.load(event.getModConfigurationDirectory().getParentFile());
 
         MinecraftForge.EVENT_BUS.register(GlobalAirdropHandler.class);
         MinecraftForge.EVENT_BUS.register(new LootZoneHandler());
@@ -208,6 +212,7 @@ public class ModularcontentsMod implements IGuiHandler {
         PACKET_HANDLER.registerMessage(PacketRequestFileContentHandler.class, PacketRequestFileContent.class, packetId++, Side.SERVER);
         PACKET_HANDLER.registerMessage(PacketSendFileContentHandler.class, PacketSendFileContent.class, packetId++, Side.CLIENT);
         PACKET_HANDLER.registerMessage(PacketSaveContentHandler.class, PacketSaveContent.class, packetId++, Side.SERVER);
+        PACKET_HANDLER.registerMessage(PacketTogglePackHandler.class, PacketTogglePack.class, packetId++, Side.SERVER);
     }
 
     public static PacketSyncContent buildContentSyncPacket() {

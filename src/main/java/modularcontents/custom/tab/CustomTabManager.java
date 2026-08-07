@@ -1,5 +1,6 @@
 package modularcontents.custom.tab;
 
+import modularcontents.custom.pack.PackState;
 import com.google.gson.Gson;
 import modularcontents.custom.item.CustomItemInfo;
 import modularcontents.custom.item.CustomContentManager;
@@ -15,7 +16,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CustomTabManager {
@@ -31,7 +34,7 @@ public class CustomTabManager {
         File rootPacksDir = new File(gameDir, "ModularContents");
         if (!rootPacksDir.exists()) return;
 
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 File tabsDir = new File(packDir, "tabs");
@@ -86,12 +89,37 @@ public class CustomTabManager {
                         }
                     }
                 }
+                sortBlockStacks(list);
             }
         };
 
         CUSTOM_TABS.put(info.id, newTab);
         TAB_INFOS.put(info.id, info);
         System.out.println("[ModularContents] Loaded custom creative tab: " + info.id);
+    }
+
+    public static void sortBlockStacks(List<ItemStack> list) {
+        List<Integer> slots = new ArrayList<>();
+        List<ItemStack> blocks = new ArrayList<>();
+        for (int i = 0; i < list.size(); i++) {
+            if (blockOrderOf(list.get(i)) >= 0) {
+                slots.add(i);
+                blocks.add(list.get(i));
+            }
+        }
+        if (slots.size() < 2) return;
+        blocks.sort((a, b) -> Integer.compare(blockOrderOf(a), blockOrderOf(b)));
+        for (int i = 0; i < slots.size(); i++) {
+            list.set(slots.get(i), blocks.get(i));
+        }
+    }
+
+    private static int blockOrderOf(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return -1;
+        ResourceLocation name = stack.getItem().getRegistryName();
+        if (name == null || !"modularcontents".equals(name.getResourceDomain())) return -1;
+        Integer index = CustomContentManager.BLOCK_ORDER.get(name.getResourcePath());
+        return index == null ? -1 : index;
     }
 
     public static String toSyncJson() {

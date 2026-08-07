@@ -1,5 +1,6 @@
 package modularcontents.custom.loot;
 
+import modularcontents.custom.pack.PackState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -29,7 +30,7 @@ public class EquipmentManager {
             return;
         }
 
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 File equipmentDir = new File(new File(packDir, "loot_tables"), "equipment");

@@ -2,6 +2,7 @@ package modularcontents.proxy;
 
 import modularcontents.ModularcontentsMod;
 import modularcontents.custom.block.TileEntityAirdrop;
+import modularcontents.custom.client.GuiTheme;
 import modularcontents.custom.client.ModularResourcePack;
 import modularcontents.custom.client.SoundAirdropSmoke;
 import modularcontents.custom.client.particle.ParticleAirdropSmoke;
@@ -101,6 +102,7 @@ public class ClientProxy extends CommonProxy {
         RenderingRegistry.registerEntityRenderingHandler(EntitySignalFlare.class, manager -> new RenderSignalFlare(manager, ModularcontentsMod.signal_flare, Minecraft.getMinecraft().getRenderItem()));
         RenderingRegistry.registerEntityRenderingHandler(EntityCustomNPC.class, RenderCustomNPC::new);
         RenderingRegistry.registerEntityRenderingHandler(EntityNPCBullet.class, RenderNPCBullet::new);
+        GuiTheme.load(event.getModConfigurationDirectory().getParentFile());
         injectCustomResourcePack(event.getModConfigurationDirectory().getParentFile());
     }
 

@@ -1,11 +1,16 @@
 package modularcontents.custom.item;
 
+import modularcontents.custom.pack.PackState;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,11 +21,12 @@ public class CustomContentManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public static final Map<String, CustomItemInfo> CUSTOM_ITEMS = new HashMap<>();
-    public static final Map<String, CustomBlockInfo> CUSTOM_BLOCKS = new HashMap<>();
+    public static final Map<String, CustomBlockInfo> CUSTOM_BLOCKS = new LinkedHashMap<>();
     public static final Map<String, CustomFoodInfo> CUSTOM_FOODS = new HashMap<>();
     public static final Map<String, CustomWeaponInfo> CUSTOM_WEAPONS = new HashMap<>();
     public static final Map<String, CustomToolInfo> CUSTOM_TOOLS = new HashMap<>();
     public static final Map<String, CustomArmorInfo> CUSTOM_ARMORS = new HashMap<>();
+    public static final Map<String, Integer> BLOCK_ORDER = new HashMap<>();
 
     public static void loadContent(File gameDir) {
         CUSTOM_ITEMS.clear();
@@ -29,13 +35,14 @@ public class CustomContentManager {
         CUSTOM_WEAPONS.clear();
         CUSTOM_TOOLS.clear();
         CUSTOM_ARMORS.clear();
+        BLOCK_ORDER.clear();
 
         File rootDir = new File(gameDir, "ModularContents");
         if (!rootDir.exists()) {
             rootDir.mkdirs();
         }
 
-        File[] packs = rootDir.listFiles(File::isDirectory);
+        File[] packs = PackState.listPacks(rootDir);
         if (packs != null) {
             for (File packDir : packs) {
                 if (packDir.getName().equals("generated")) continue;
@@ -68,6 +75,7 @@ public class CustomContentManager {
 
         File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
         if (files != null) {
+            Arrays.sort(files, (a, b) -> a.getName().compareToIgnoreCase(b.getName()));
             for (File file : files) {
                 try (FileReader reader = new FileReader(file)) {
                     T info = GSON.fromJson(reader, clazz);
@@ -91,16 +99,44 @@ public class CustomContentManager {
         }
     }
 
+    private static final String[][] VARIANT_TYPES = {
+            {"block", ""},
+            {"stair", "_stairs"},
+            {"slab", "_slab"},
+            {"fence", "_fence"},
+            {"wall", "_wall"},
+            {"trapdoor", "_trapdoor"},
+            {"door", "_door"},
+            {"button", "_button"},
+            {"pressure_plate", "_pressure_plate"}
+    };
+
+    private static int typeRank(String blockType) {
+        for (int i = 0; i < VARIANT_TYPES.length; i++) {
+            if (VARIANT_TYPES[i][0].equalsIgnoreCase(blockType)) return i;
+        }
+        return 0;
+    }
+
+    private static String baseId(CustomBlockInfo info) {
+        int rank = typeRank(info.blockType);
+        String suffix = VARIANT_TYPES[rank][1];
+        if (!suffix.isEmpty() && info.id.toLowerCase().endsWith(suffix)) {
+            return info.id.substring(0, info.id.length() - suffix.length());
+        }
+        return info.id;
+    }
+
     private static void generateVariants() {
-        java.util.Map<String, CustomBlockInfo> generated = new java.util.HashMap<>();
+        Map<String, CustomBlockInfo> generated = new LinkedHashMap<>();
         for (CustomBlockInfo info : CUSTOM_BLOCKS.values()) {
-            if (info.hasSlab) {
-                CustomBlockInfo slab = cloneBlock(info, "_slab", "slab");
-                generated.put(slab.id, slab);
-            }
             if (info.hasStairs) {
                 CustomBlockInfo stair = cloneBlock(info, "_stairs", "stair");
                 generated.put(stair.id, stair);
+            }
+            if (info.hasSlab) {
+                CustomBlockInfo slab = cloneBlock(info, "_slab", "slab");
+                generated.put(slab.id, slab);
             }
             if (info.hasFence) {
                 CustomBlockInfo fence = cloneBlock(info, "_fence", "fence");
@@ -112,6 +148,27 @@ public class CustomContentManager {
             }
         }
         CUSTOM_BLOCKS.putAll(generated);
+        sortBlocks();
+    }
+
+    private static void sortBlocks() {
+        Map<String, Integer> baseOrder = new LinkedHashMap<>();
+        List<CustomBlockInfo> all = new ArrayList<>(CUSTOM_BLOCKS.values());
+        for (CustomBlockInfo info : all) {
+            baseOrder.putIfAbsent(baseId(info), baseOrder.size());
+        }
+        all.sort((a, b) -> {
+            int cmp = Integer.compare(typeRank(a.blockType), typeRank(b.blockType));
+            if (cmp != 0) return cmp;
+            cmp = Integer.compare(baseOrder.get(baseId(a)), baseOrder.get(baseId(b)));
+            return cmp != 0 ? cmp : a.id.compareToIgnoreCase(b.id);
+        });
+        CUSTOM_BLOCKS.clear();
+        BLOCK_ORDER.clear();
+        for (CustomBlockInfo info : all) {
+            CUSTOM_BLOCKS.put(info.id, info);
+            BLOCK_ORDER.put(info.id, BLOCK_ORDER.size());
+        }
     }
 
     private static CustomBlockInfo cloneBlock(CustomBlockInfo original, String suffix, String newType) {

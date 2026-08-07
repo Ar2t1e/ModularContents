@@ -36,7 +36,7 @@ public final class PackZipUtils {
     }
 
     public static File[] listZips(File rootPacksDir) {
-        File[] zips = rootPacksDir.listFiles((d, name) -> isZipName(name));
+        File[] zips = rootPacksDir.listFiles((d, name) -> isZipName(name) && PackState.isEnabled(name));
         return zips != null ? zips : new File[0];
     }
 
@@ -135,7 +135,7 @@ public final class PackZipUtils {
         List<String> names = new ArrayList<>();
         File rootPacksDir = new File(gameDir, "ModularContents");
 
-        File[] packDirs = rootPacksDir.listFiles(File::isDirectory);
+        File[] packDirs = PackState.listPacks(rootPacksDir);
         if (packDirs != null) {
             for (File packDir : packDirs) {
                 if (dirHasFiles(new File(packDir, "items"), ".json") || dirHasFiles(new File(packDir, "textures"), ".png")) {
