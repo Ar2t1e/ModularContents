@@ -40,4 +40,7 @@ public class CustomFoodInfo {
 
     @SerializedName("potion_probability")
     public float potionProbability = 1.0f; // 0.0 to 1.0
+
+    @SerializedName("burn_time")
+    public int burnTime = 0;
 }

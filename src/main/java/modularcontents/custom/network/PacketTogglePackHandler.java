@@ -2,6 +2,7 @@ package modularcontents.custom.network;
 
 import modularcontents.ModularcontentsMod;
 import modularcontents.custom.loot.AirdropLootManager;
+import modularcontents.custom.item.CustomFuelManager;
 import modularcontents.custom.loot.EquipmentManager;
 import modularcontents.custom.npc.NPCManager;
 import modularcontents.custom.pack.PackState;
@@ -36,6 +37,7 @@ public class PacketTogglePackHandler implements IMessageHandler<PacketTogglePack
             AirdropLootManager.loadLootTables(dataDir);
             EquipmentManager.loadEquipment(dataDir);
             NPCManager.loadNPCs(dataDir);
+            CustomFuelManager.loadFuels(dataDir);
 
             ModularcontentsMod.PACKET_HANDLER.sendToAll(ModularcontentsMod.buildContentSyncPacket());
             ModularcontentsMod.PACKET_HANDLER.sendTo(new PacketSendPackList(PacketRequestPackListHandler.buildPackListJson(dataDir)), player);

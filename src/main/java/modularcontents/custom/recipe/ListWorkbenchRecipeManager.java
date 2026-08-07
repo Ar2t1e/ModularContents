@@ -192,7 +192,12 @@ public class ListWorkbenchRecipeManager {
     private static final String[] EXAMPLE_PACK_ITEMS = {
             "duct_tape.json",
             "screwdriver.json",
-            "signal_flare.json"
+            "signal_flare.json",
+            "coal_briquette.json"
+    };
+
+    private static final String[] EXAMPLE_PACK_FUELS = {
+            "example_fuels.json"
     };
 
     private static final String[] EXAMPLE_PACK_FOOD = {
@@ -230,6 +235,9 @@ public class ListWorkbenchRecipeManager {
                     "/assets/modularcontents/example_pack/weapons/", EXAMPLE_PACK_WEAPONS);
             int npcs = copyExampleResources(new File(examplePackDir, "npcs"),
                     "/assets/modularcontents/example_pack/npcs/", EXAMPLE_PACK_NPCS);
+            int fuels = copyExampleResources(new File(examplePackDir, "fuels"),
+                    "/assets/modularcontents/example_pack/fuels/", EXAMPLE_PACK_FUELS);
+            LOGGER.info("Created " + fuels + " example fuel definitions");
 
             LOGGER.info("Created example content pack (" + recipes + " recipes, " + lootTables + " loot tables, " + equipment + " equipment presets, " + blocks + " blocks, " + workbenches + " workbenches, " + textures + " textures, " + items + " items, " + food + " foods, " + weapons + " weapons, " + npcs + " npcs) in ModularContents/example_pack");
         } catch (Exception e) {

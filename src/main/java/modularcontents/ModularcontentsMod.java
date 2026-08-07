@@ -62,6 +62,7 @@ import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraftforge.client.model.ModelLoader;
 
 import modularcontents.custom.item.CustomContentManager;
+import modularcontents.custom.item.CustomFuelManager;
 import modularcontents.custom.item.CustomBlockInfo;
 import modularcontents.custom.item.CustomFoodInfo;
 import modularcontents.custom.item.ItemCustomFood;
@@ -168,6 +169,7 @@ public class ModularcontentsMod implements IGuiHandler {
         // Load custom config
         ModularContentsConfig.load(event.getModConfigurationDirectory().getParentFile());
         PackState.load(event.getModConfigurationDirectory().getParentFile());
+        CustomFuelManager.loadFuels(event.getModConfigurationDirectory().getParentFile());
 
         MinecraftForge.EVENT_BUS.register(GlobalAirdropHandler.class);
         MinecraftForge.EVENT_BUS.register(new LootZoneHandler());
@@ -249,6 +251,7 @@ public class ModularcontentsMod implements IGuiHandler {
         ListWorkbenchRecipeManager.loadRecipes(event.getServer().getDataDirectory());
         AirdropLootManager.loadLootTables(event.getServer().getDataDirectory());
         EquipmentManager.loadEquipment(event.getServer().getDataDirectory());
+        CustomFuelManager.loadFuels(event.getServer().getDataDirectory());
         modularcontents.custom.recipe.CustomSmeltingManager.loadSmeltingRecipes(event.getServer().getDataDirectory());
 
         // Register in-game commands

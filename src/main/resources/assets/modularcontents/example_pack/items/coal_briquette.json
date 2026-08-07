@@ -1,0 +1,11 @@
+{
+  "id": "coal_briquette",
+  "display_name": "Coal Briquette",
+  "description": [
+    "Pressed coal dust.",
+    "Burns twice as long as coal."
+  ],
+  "max_stack_size": 64,
+  "creative_tab": "misc",
+  "burn_time": 3200
+}

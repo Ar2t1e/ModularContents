@@ -54,9 +54,10 @@ public class GuiContentCreator extends GuiContainer {
     private static final int TAB_BLOCK = 9;
     private static final int TAB_FOOD = 10;
     private static final int TAB_THEME = 11;
+    private static final int TAB_FUEL = 12;
 
-    private static final int[] TAB_ORDER = {TAB_BLOCK, TAB_ITEMS, TAB_FOOD, TAB_LOOT, TAB_RECIPES, TAB_TABS, TAB_ZONE, TAB_NPC, TAB_THEME};
-    private static final String[] TAB_LABELS = {"Blocks", "Items", "Food", "Loot", "Recipes", "Tabs", "Zone", "NPC", "Theme"};
+    private static final int[] TAB_ORDER = {TAB_BLOCK, TAB_ITEMS, TAB_FOOD, TAB_FUEL, TAB_LOOT, TAB_RECIPES, TAB_TABS, TAB_ZONE, TAB_NPC, TAB_THEME};
+    private static final String[] TAB_LABELS = {"Blocks", "Items", "Food", "Fuel", "Loot", "Recipes", "Tabs", "Zone", "NPC", "Theme"};
 
     private static final int BTN_TAB_BASE = 100;
     private static final int BTN_SAVE = 1;
@@ -295,6 +296,11 @@ public class GuiContentCreator extends GuiContainer {
         addField(TAB_FOOD, "potion_duration", "Duration", FieldType.INT, "100", 6, 1);
         addField(TAB_FOOD, "potion_amplifier", "Amplifier", FieldType.INT, "0", 2, 1);
         addField(TAB_FOOD, "potion_probability", "Probability", FieldType.FLOAT, "1.0", 5, 1);
+
+        addField(TAB_FUEL, "id", "File name / ID", FieldType.STRING, "my_fuel", 64, 2);
+        addField(TAB_FUEL, "item", "Item ID", FieldType.STRING, "modularcontents:my_item", 128, 2);
+        addField(TAB_FUEL, "meta", "Meta (-1 = any)", FieldType.INT, "-1", 6, 1);
+        addField(TAB_FUEL, "burn_time", "Burn Time (ticks)", FieldType.INT, "1600", 6, 1);
 
         addField(TAB_TABS, "id", "File name / ID", FieldType.STRING, "my_tab", 64, 2);
         addField(TAB_TABS, "display_name", "Display Name", FieldType.STRING, "My Custom Tab", 64, 2);
@@ -1562,6 +1568,7 @@ public class GuiContentCreator extends GuiContainer {
             case TAB_ITEMS: return "items";
             case TAB_BLOCK: return "blocks";
             case TAB_FOOD: return "food";
+            case TAB_FUEL: return "fuels";
             case TAB_TABS: return "tabs";
             case TAB_NPC: return "npcs";
             case TAB_RECIPES: return "recipes";
